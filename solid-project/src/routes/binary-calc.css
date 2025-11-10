@@ -1,0 +1,379 @@
+.binary-calc-container {
+  min-height: calc(100vh - 200px);
+  background: linear-gradient(to bottom, #e8f5e9, #c8e6c9);
+}
+
+.game-header {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.game-header h1 {
+  font-size: 2.5rem;
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.game-header p {
+  font-size: 1.2rem;
+  margin: 0;
+  color: #666;
+}
+
+.controls {
+  background: white;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.mode-selector,
+.difficulty-selector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.mode-selector label,
+.difficulty-selector label {
+  font-weight: bold;
+  color: #666;
+}
+
+.mode-btn,
+.difficulty-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #4caf50;
+  background: white;
+  color: #4caf50;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.mode-btn:hover,
+.difficulty-btn:hover {
+  background: #e8f5e9;
+}
+
+.mode-btn.active,
+.difficulty-btn.active {
+  background: #4caf50;
+  color: white;
+  font-weight: bold;
+}
+
+.stats-panel {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem 1rem;
+  background: white;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.stat-value.correct {
+  color: #4caf50;
+}
+
+.stat-value.incorrect {
+  color: #f44336;
+}
+
+.stat-value.streak {
+  color: #ff9800;
+}
+
+.stat-value.best-streak {
+  color: #9c27b0;
+}
+
+.game-area {
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 0 1rem;
+}
+
+.question-card {
+  background: white;
+  padding: 3rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.question-label {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+.question-value {
+  font-family: 'Courier New', monospace;
+  font-size: 3rem;
+  font-weight: bold;
+  color: #4caf50;
+  letter-spacing: 0.2rem;
+}
+
+.arrow {
+  text-align: center;
+  font-size: 3rem;
+  color: #4caf50;
+  margin: 1rem 0;
+}
+
+.answer-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: all 0.3s;
+}
+
+.answer-section.correct {
+  background: #e8f5e9;
+  border: 3px solid #4caf50;
+}
+
+.answer-section.incorrect {
+  background: #ffebee;
+  border: 3px solid #f44336;
+  animation: shake 0.3s;
+}
+
+.answer-label {
+  font-size: 1rem;
+  color: #666;
+  font-weight: bold;
+  text-align: center;
+}
+
+.answer-input {
+  width: 100%;
+  padding: 1rem;
+  font-size: 2rem;
+  font-family: 'Courier New', monospace;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  text-align: center;
+  letter-spacing: 0.2rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.answer-input:focus {
+  border-color: #388e3c;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.check-button {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.check-button:hover {
+  transform: scale(1.05);
+}
+
+.feedback-message {
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.feedback-message.correct {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.feedback-message.incorrect {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.feedback-icon {
+  font-size: 2rem;
+}
+
+.next-button {
+  padding: 0.75rem 1.5rem;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.next-button:hover {
+  transform: scale(1.05);
+}
+
+.helper-section {
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.helper-section h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  text-align: center;
+}
+
+.conversion-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  font-family: 'Courier New', monospace;
+}
+
+.table-header {
+  display: contents;
+}
+
+.table-header span {
+  background: #4caf50;
+  color: white;
+  padding: 0.75rem;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.table-row {
+  display: contents;
+}
+
+.table-row span {
+  background: #f5f5f5;
+  padding: 0.5rem;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.info-section {
+  max-width: 600px;
+  margin: 3rem auto 4rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.info-section h2 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.info-section p {
+  margin: 0.5rem 0;
+  color: #666;
+  line-height: 1.6;
+}
+
+.reset-button {
+  margin-top: 2rem;
+  padding: 0.75rem 1.5rem;
+  background: #9e9e9e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reset-button:hover {
+  background: #757575;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+@media (max-width: 768px) {
+  .game-header h1 {
+    font-size: 2rem;
+  }
+
+  .question-value {
+    font-size: 2rem;
+    letter-spacing: 0.1rem;
+  }
+
+  .answer-input {
+    font-size: 1.5rem;
+    letter-spacing: 0.1rem;
+  }
+
+  .stats-panel {
+    gap: 1rem;
+  }
+
+  .stat-item {
+    min-width: 100px;
+  }
+
+  .mode-btn,
+  .difficulty-btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .conversion-table {
+    font-size: 0.9rem;
+  }
+}
