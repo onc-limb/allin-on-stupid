@@ -10,14 +10,28 @@
 
 ## 1. プロジェクトの準備
 
-### 1.1 依存関係の確認
+### 1.1 静的アセットの配置
+
+**重要**: 画像やその他の静的ファイルは必ず`public/`ディレクトリ内に配置してください。
+
+```
+solid-project/
+├── public/
+│   ├── favicon.ico
+│   └── images/          # ← 画像はここに配置
+│       └── earthmap1k.jpg
+```
+
+`public/`内のファイルは自動的にビルド出力（`dist/`）にコピーされます。
+
+### 1.2 依存関係の確認
 
 プロジェクトには既にCloudflare Pages用の設定が含まれています：
 
 - `app.config.ts`に`cloudflare-pages`プリセットが設定済み
 - ビルドスクリプトが`package.json`に定義済み
 
-### 1.2 ローカルでビルドテスト
+### 1.3 ローカルでビルドテスト
 
 デプロイ前に、ローカルでビルドが成功することを確認してください：
 
@@ -142,6 +156,13 @@ https://[commit-hash].allin-on-stupid.pages.dev
 **対処法**:
 - SolidStartのCloudflare Pagesプリセットは自動でルーティングを処理します
 - `app.config.ts`で`preset: "cloudflare-pages"`が設定されていることを確認
+
+**症状**: 画像やテクスチャが表示されない
+
+**対処法**:
+1. 静的ファイルが`public/`ディレクトリ内にあることを確認
+2. ビルド後、`dist/`に該当ファイルがコピーされているか確認
+3. コード内のパスが正しいか確認（例: `/images/texture.jpg`）
 
 ### Three.jsが動作しない場合
 
