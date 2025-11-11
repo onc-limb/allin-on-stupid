@@ -1,5 +1,6 @@
 body {
   font-family: Gordita, Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  padding-top: 80px; /* 共通ヘッダーの高さ分の余白 */
 }
 
 a {

@@ -84,15 +84,16 @@ export default function ScrollTrial() {
     <main class="scroll-trial-container">
       <Title>スクロールタイムアタック - All In On Stupid</Title>
 
-      <div class="game-header">
+      <div class="fixed-header">
+        <div class="game-header">
           <h1>🏃 スクロールタイムアタック</h1>
-          <p>できるだけ早く10,000pxスクロールしよう！</p>
+          <p>できるだけ早く一番下までスクロールしよう！</p>
         </div>
 
         <div class="stats-panel">
           <div class="stat-item">
             <span class="stat-label">距離</span>
-            <span class="stat-value">{Math.floor(scrollDistance())}px / {targetDistance}px</span>
+            <span class="stat-value">{(scrollDistance() / 1000).toFixed(1)}m</span>
           </div>
           <div class="stat-item">
             <span class="stat-label">タイム</span>
@@ -109,6 +110,7 @@ export default function ScrollTrial() {
         <div class="progress-bar-container">
           <div class="progress-bar" style={{ width: `${progress()}%` }}></div>
         </div>
+      </div>
 
         {!isPlaying() && scrollDistance() === 0 && (
           <div class="instruction">
