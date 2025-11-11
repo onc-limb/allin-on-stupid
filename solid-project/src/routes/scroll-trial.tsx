@@ -3,7 +3,7 @@ import { createSignal, onCleanup, onMount } from "solid-js";
 import "./scroll-trial.css";
 
 export default function ScrollTrial() {
-  const [scrollDistance, setScrollDistance] = createSignal(0);
+  const [scrollDistanceMeters, setScrollDistanceMeters] = createSignal(0);
   const [startTime, setStartTime] = createSignal<number | null>(null);
   const [elapsedTime, setElapsedTime] = createSignal(0);
   const [isPlaying, setIsPlaying] = createSignal(false);
@@ -11,13 +11,24 @@ export default function ScrollTrial() {
   const [pausedTime, setPausedTime] = createSignal(0);
   const [bestTime, setBestTime] = createSignal<number | null>(null);
 
-  const targetDistance = 10000; // 10000px
+  const targetDistance = 500000;
+
+  // ディスプレイの物理的なサイズを推定（96 DPI を基準とし、devicePixelRatioを考慮）
+  const pixelToMeter = () => {
+    const dpi = 96 * window.devicePixelRatio; // 標準DPI × デバイスピクセル比
+    const pixelsPerInch = dpi;
+    const pixelsPerMeter = pixelsPerInch * 39.3701; // 1メートル = 39.3701インチ
+    return 1 / pixelsPerMeter;
+  };
 
   let intervalId: number | undefined;
 
   const handleScroll = () => {
     const distance = window.scrollY;
-    setScrollDistance(distance);
+    
+    // ピクセルをメートルに変換
+    const meters = distance * pixelToMeter();
+    setScrollDistanceMeters(meters);
 
     // 一時停止中にスクロールしたら再開
     if (isPaused()) {
@@ -79,7 +90,7 @@ export default function ScrollTrial() {
 
   const resetGame = () => {
     window.scrollTo(0, 0);
-    setScrollDistance(0);
+    setScrollDistanceMeters(0);
     setStartTime(null);
     setElapsedTime(0);
     setPausedTime(0);
@@ -96,7 +107,7 @@ export default function ScrollTrial() {
     return `${seconds}.${milliseconds.toString().padStart(3, "0")}秒`;
   };
 
-  const progress = () => Math.min((scrollDistance() / targetDistance) * 100, 100);
+  const progress = () => Math.min((scrollDistanceMeters() / targetDistance) * 100, 100);
 
   // イベントリスナーの登録
   onMount(() => {
@@ -123,7 +134,7 @@ export default function ScrollTrial() {
         <div class="stats-panel">
           <div class="stat-item">
             <span class="stat-label">距離</span>
-            <span class="stat-value">{(scrollDistance() / 1000).toFixed(1)}m</span>
+            <span class="stat-value">{scrollDistanceMeters().toFixed(2)}m</span>
           </div>
           <div class="stat-item">
             <span class="stat-label">タイム</span>
@@ -147,7 +158,7 @@ export default function ScrollTrial() {
         </div>
       </div>
 
-        {!isPlaying() && scrollDistance() === 0 && (
+        {!isPlaying() && scrollDistanceMeters() === 0 && (
           <div class="instruction">
             <p>👇 下にスクロールを開始してください</p>
           </div>
@@ -163,7 +174,7 @@ export default function ScrollTrial() {
           </div>
         )}
 
-        {scrollDistance() >= targetDistance && (
+        {scrollDistanceMeters() >= targetDistance && (
           <div class="finish-banner">
             <h2>🎉 ゴール！</h2>
             <p>タイム: {formatTime(elapsedTime())}</p>
@@ -174,7 +185,7 @@ export default function ScrollTrial() {
         )}
 
         <div class="scroll-content">
-          {Array.from({ length: 200 }, (_, i) => (
+          {Array.from({ length: 1000 }, (_, i) => (
             <div class="scroll-marker" data-distance={i * 50}>
               {i * 50}px
             </div>
