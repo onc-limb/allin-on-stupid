@@ -27,7 +27,7 @@ pnpm install
 pnpm build
 ```
 
-ビルドが成功すると、`.output`ディレクトリが生成されます。
+ビルドが成功すると、`dist`ディレクトリが生成されます（`cloudflare-pages`プリセット使用時）。
 
 ## 2. Cloudflare Pagesでのセットアップ
 
@@ -54,7 +54,7 @@ pnpm build
 | **Project name** | `allin-on-stupid` （任意の名前） |
 | **Production branch** | `main` |
 | **Build command** | `cd solid-project && pnpm install && pnpm build` |
-| **Build output directory** | `solid-project/.output/public` |
+| **Build output directory** | `solid-project/dist` |
 | **Root directory** | `/` （ルートのまま） |
 
 ### 2.4 環境変数の設定（必要に応じて）

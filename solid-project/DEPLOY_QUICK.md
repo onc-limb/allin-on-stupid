@@ -15,7 +15,7 @@ pnpm build
 ```
 Production branch:       main
 Build command:          cd solid-project && pnpm install && pnpm build
-Build output directory: solid-project/.output/public
+Build output directory: solid-project/dist
 Root directory:         /
 ```
 

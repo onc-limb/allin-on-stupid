@@ -39,13 +39,13 @@ pnpm build
 ### 初回デプロイ
 
 ```bash
-wrangler pages deploy .output/public --project-name=allin-on-stupid
+wrangler pages deploy dist --project-name=allin-on-stupid
 ```
 
 ### 2回目以降のデプロイ
 
 ```bash
-wrangler pages deploy .output/public
+wrangler pages deploy dist
 ```
 
 ## 5. デプロイコマンドのショートカット（オプション）
@@ -58,7 +58,7 @@ wrangler pages deploy .output/public
     "dev": "vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
-    "deploy": "pnpm build && wrangler pages deploy .output/public",
+    "deploy": "pnpm build && wrangler pages deploy dist",
     "version": "vinxi version"
   }
 }
@@ -75,7 +75,7 @@ pnpm deploy
 Cloudflare Pages環境をローカルでエミュレート：
 
 ```bash
-wrangler pages dev .output/public
+wrangler pages dev dist
 ```
 
 ## 7. プロジェクト情報の確認
