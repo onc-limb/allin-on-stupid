@@ -6,21 +6,21 @@ export default function Home() {
   const games = [
     {
       title: "スクロールタイムアタック",
-      description: "スクロール速度を競うタイムアタックゲーム。Three.jsで3D空間を表現し、Rapierで物理演算を実装予定。",
+      description: "スクロール速度を競うタイムアタックゲーム。",
       path: "/scroll-trial",
       icon: "🏃",
       status: "開発中"
     },
     {
       title: "パスワードタイピング練習",
-      description: "ランダムなパスワード文字列でタイピング練習。WASMで高速な文字列生成を実装予定。",
+      description: "ランダムなパスワード文字列でタイピング練習。",
       path: "/password-typing",
       icon: "🔐",
       status: "開発中"
     },
     {
       title: "バイナリ計算練習",
-      description: "2進数⇔10進数の変換練習ツール。WASMで高速計算を実装予定。",
+      description: "進数変換/16進数四則演算練習ツール。",
       path: "/binary-calc",
       icon: "🔢",
       status: "開発中"
@@ -47,28 +47,6 @@ export default function Home() {
               <span class="game-status">{game.status}</span>
             </A>
           ))}
-        </div>
-      </section>
-
-      <section class="tech-stack">
-        <h2 class="section-title">使用技術</h2>
-        <div class="tech-grid">
-          <div class="tech-item">
-            <h3>SolidStart</h3>
-            <p>リアクティブなUIフレームワーク</p>
-          </div>
-          <div class="tech-item">
-            <h3>Three.js</h3>
-            <p>WebGL 3Dグラフィックス</p>
-          </div>
-          <div class="tech-item">
-            <h3>Rapier</h3>
-            <p>高性能な物理エンジン</p>
-          </div>
-          <div class="tech-item">
-            <h3>WebAssembly</h3>
-            <p>Rust製の高速計算モジュール</p>
-          </div>
         </div>
       </section>
     </main>
