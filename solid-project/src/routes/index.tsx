@@ -33,10 +33,7 @@ export default function Home() {
       
       <section class="hero">
         <h1 class="hero-title">All In On Stupid</h1>
-        <p class="hero-subtitle">くだらないゲームで最新Web技術を学ぼう</p>
-        <p class="hero-description">
-          SolidStart、Three.js、WebAssembly (Rust)を活用した技術実験サイト
-        </p>
+        <p class="hero-subtitle">くだらないゲームで遊ぼう</p>
       </section>
 
       <section class="games-section">

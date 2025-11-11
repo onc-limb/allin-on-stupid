@@ -1,5 +1,5 @@
 import { Title } from "@solidjs/meta";
-import { createSignal, onCleanup } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 import "./scroll-trial.css";
 
 export default function ScrollTrial() {
@@ -69,13 +69,15 @@ export default function ScrollTrial() {
   const progress = () => Math.min((scrollDistance() / targetDistance) * 100, 100);
 
   // イベントリスナーの登録
-  window.addEventListener("scroll", handleScroll);
-
-  onCleanup(() => {
-    window.removeEventListener("scroll", handleScroll);
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
+  onMount(() => {
+    window.addEventListener("scroll", handleScroll);
+    
+    onCleanup(() => {
+      window.removeEventListener("scroll", handleScroll);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    });
   });
 
   return (
