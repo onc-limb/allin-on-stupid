@@ -4,6 +4,19 @@
   padding-top: 160px; /* 共通ヘッダー(80px) + 固定ヘッダー(80px)の高さ分 */
 }
 
+/* Three.js Canvas - 固定ヘッダーの下、画面いっぱいに固定表示 */
+.threejs-canvas {
+  position: fixed;
+  top: 160px; /* 共通ヘッダー(80px) + 固定ヘッダー(80px) */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: calc(100vh - 160px);
+  z-index: 1;
+  pointer-events: none; /* スクロールを妨げないように */
+}
+
 .fixed-header {
   position: fixed;
   top: 80px; /* 共通ヘッダーの下に配置 */

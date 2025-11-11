@@ -1,8 +1,12 @@
 import { Title } from "@solidjs/meta";
 import { createSignal, onCleanup, onMount } from "solid-js";
+import { ThreeScene } from "../lib/threeScene";
 import "./scroll-trial.css";
 
 export default function ScrollTrial() {
+  let canvasRef: HTMLCanvasElement | undefined;
+  let threeScene: ThreeScene | undefined;
+  
   const [scrollDistanceMeters, setScrollDistanceMeters] = createSignal(0);
   const [startTime, setStartTime] = createSignal<number | null>(null);
   const [elapsedTime, setElapsedTime] = createSignal(0);
@@ -11,7 +15,7 @@ export default function ScrollTrial() {
   const [pausedTime, setPausedTime] = createSignal(0);
   const [bestTime, setBestTime] = createSignal<number | null>(null);
 
-  const targetDistance = 500000;
+  const targetDistance = 10;
 
   // ディスプレイの物理的なサイズを推定（96 DPI を基準とし、devicePixelRatioを考慮）
   const pixelToMeter = () => {
@@ -30,6 +34,11 @@ export default function ScrollTrial() {
     const meters = distance * pixelToMeter();
     setScrollDistanceMeters(meters);
 
+    // Three.jsシーンを更新
+    if (threeScene) {
+      threeScene.updateByScroll(meters);
+    }
+
     // 一時停止中にスクロールしたら再開
     if (isPaused()) {
       resumeGame();
@@ -40,7 +49,7 @@ export default function ScrollTrial() {
       startGame();
     }
 
-    if (isPlaying() && !isPaused() && distance >= targetDistance) {
+    if (isPlaying() && !isPaused() && meters >= targetDistance) {
       finishGame();
     }
   };
@@ -49,6 +58,11 @@ export default function ScrollTrial() {
     setIsPlaying(true);
     setIsPaused(false);
     setStartTime(Date.now() - pausedTime());
+    
+    // Three.jsシーンの状態を更新
+    if (threeScene) {
+      threeScene.updateGameState(true, false);
+    }
     
     intervalId = window.setInterval(() => {
       if (startTime() && !isPaused()) {
@@ -60,6 +74,12 @@ export default function ScrollTrial() {
   const pauseGame = () => {
     setIsPaused(true);
     setPausedTime(elapsedTime());
+    
+    // Three.jsシーンの状態を更新
+    if (threeScene) {
+      threeScene.updateGameState(true, true);
+    }
+    
     if (intervalId) {
       clearInterval(intervalId);
     }
@@ -68,6 +88,11 @@ export default function ScrollTrial() {
   const resumeGame = () => {
     setIsPaused(false);
     setStartTime(Date.now() - pausedTime());
+    
+    // Three.jsシーンの状態を更新
+    if (threeScene) {
+      threeScene.updateGameState(true, false);
+    }
     
     intervalId = window.setInterval(() => {
       if (startTime() && !isPaused()) {
@@ -96,6 +121,13 @@ export default function ScrollTrial() {
     setPausedTime(0);
     setIsPlaying(false);
     setIsPaused(false);
+    
+    // Three.jsシーンの状態をリセット
+    if (threeScene) {
+      threeScene.updateGameState(false, false);
+      threeScene.updateByScroll(0);
+    }
+    
     if (intervalId) {
       clearInterval(intervalId);
     }
@@ -113,10 +145,36 @@ export default function ScrollTrial() {
   onMount(() => {
     window.addEventListener("scroll", handleScroll);
     
+    // Three.jsの初期化
+    if (canvasRef) {
+      try {
+        threeScene = new ThreeScene(canvasRef);
+        threeScene.startAnimation();
+        console.log("Three.js シーン初期化完了");
+      } catch (error) {
+        console.error("Three.js初期化エラー:", error);
+      }
+    }
+
+    // ウィンドウリサイズ対応
+    const handleResize = () => {
+      if (threeScene && canvasRef) {
+        const width = canvasRef.clientWidth;
+        const height = canvasRef.clientHeight;
+        threeScene.handleResize(width, height);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    
     onCleanup(() => {
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
       if (intervalId) {
         clearInterval(intervalId);
+      }
+      // Three.jsのクリーンアップ
+      if (threeScene) {
+        threeScene.dispose();
       }
     });
   });
@@ -124,6 +182,12 @@ export default function ScrollTrial() {
   return (
     <main class="scroll-trial-container">
       <Title>スクロールタイムアタック - All In On Stupid</Title>
+
+      {/* Three.js 3D Canvas - 固定ヘッダーの下、画面いっぱいに固定表示 */}
+      <canvas 
+        ref={canvasRef}
+        class="threejs-canvas"
+      />
 
       <div class="fixed-header">
         <div class="game-header">
@@ -152,10 +216,6 @@ export default function ScrollTrial() {
             </button>
           )}
         </div>
-
-        <div class="progress-bar-container">
-          <div class="progress-bar" style={{ width: `${progress()}%` }}></div>
-        </div>
       </div>
 
         {!isPlaying() && scrollDistanceMeters() === 0 && (
@@ -177,7 +237,10 @@ export default function ScrollTrial() {
         {scrollDistanceMeters() >= targetDistance && (
           <div class="finish-banner">
             <h2>🎉 ゴール！</h2>
-            <p>タイム: {formatTime(elapsedTime())}</p>
+            <p>あなたの {formatTime(elapsedTime())} が無駄になりました</p>
+            <p style={{ "font-size": "0.9rem", "margin-top": "0.5rem", "color": "#999" }}>
+              (遊んでくれてありがとう)
+            </p>
             <button class="reset-button" onClick={resetGame}>
               もう一度挑戦
             </button>
@@ -185,11 +248,8 @@ export default function ScrollTrial() {
         )}
 
         <div class="scroll-content">
-          {Array.from({ length: 1000 }, (_, i) => (
-            <div class="scroll-marker" data-distance={i * 50}>
-              {i * 50}px
-            </div>
-          ))}
+          {/* 無限スクロールのための十分な高さを確保 */}
+          <div style={{ height: "1000000px" }}></div>
         </div>
     </main>
   );
