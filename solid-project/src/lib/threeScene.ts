@@ -19,7 +19,7 @@ export class ThreeScene {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    this.camera.position.z = 5;
+    this.camera.position.set(0, 0, +1000);
 
     // レンダラーの作成
     this.renderer = new THREE.WebGLRenderer({
@@ -39,20 +39,23 @@ export class ThreeScene {
    */
   private initObjects() {
     // キューブの作成
-    const geometry = new THREE.BoxGeometry(2, 2, 2);
-    const material = new THREE.MeshPhongMaterial({
-      color: 0x667eea,
-      shininess: 100,
+    const geometry = new THREE.SphereGeometry(300, 30, 30);
+    // const material = new THREE.MeshStandardMaterial({color: 0xFF0000});
+    // 画像を読み込む
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load('images/earthmap1k.jpg');
+    texture.colorSpace = THREE.SRGBColorSpace;
+    // マテリアルにテクスチャーを設定
+    const material = new THREE.MeshStandardMaterial({
+    map: texture
     });
     this.mesh = new THREE.Mesh(geometry, material);
     this.scene.add(this.mesh);
 
-    // ライトの追加
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    this.scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 5, 5);
+    // 平行光源
+    const directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+    directionalLight.position.set(1, 1, 1);
+    // シーンに追加
     this.scene.add(directionalLight);
 
     // グリッドヘルパー（オプション）
@@ -70,7 +73,7 @@ export class ThreeScene {
 
       // キューブを回転
       if (this.mesh) {
-        this.mesh.rotation.x += 0.01;
+        // this.mesh.rotation.x += 0.01;
         this.mesh.rotation.y += 0.01;
       }
 
@@ -101,23 +104,6 @@ export class ThreeScene {
 
     // カメラの位置を調整
     this.camera.position.y = scrollMeters * 0.5;
-  }
-
-  /**
-   * ゲームの状態に応じてエフェクトを適用
-   * @param isPlaying ゲーム中かどうか
-   * @param isPaused 一時停止中かどうか
-   */
-  updateGameState(isPlaying: boolean, isPaused: boolean) {
-    if (this.mesh) {
-      if (isPaused) {
-        // 一時停止中は灰色に
-        (this.mesh.material as THREE.MeshPhongMaterial).color.setHex(0x999999);
-      } else if (!isPlaying) {
-        // 待機中は元の色に
-        (this.mesh.material as THREE.MeshPhongMaterial).color.setHex(0x667eea);
-      }
-    }
   }
 
   /**

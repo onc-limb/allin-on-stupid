@@ -59,11 +59,6 @@ export default function ScrollTrial() {
     setIsPaused(false);
     setStartTime(Date.now() - pausedTime());
     
-    // Three.jsシーンの状態を更新
-    if (threeScene) {
-      threeScene.updateGameState(true, false);
-    }
-    
     intervalId = window.setInterval(() => {
       if (startTime() && !isPaused()) {
         setElapsedTime(Date.now() - startTime()!);
@@ -75,11 +70,6 @@ export default function ScrollTrial() {
     setIsPaused(true);
     setPausedTime(elapsedTime());
     
-    // Three.jsシーンの状態を更新
-    if (threeScene) {
-      threeScene.updateGameState(true, true);
-    }
-    
     if (intervalId) {
       clearInterval(intervalId);
     }
@@ -88,11 +78,6 @@ export default function ScrollTrial() {
   const resumeGame = () => {
     setIsPaused(false);
     setStartTime(Date.now() - pausedTime());
-    
-    // Three.jsシーンの状態を更新
-    if (threeScene) {
-      threeScene.updateGameState(true, false);
-    }
     
     intervalId = window.setInterval(() => {
       if (startTime() && !isPaused()) {
@@ -122,12 +107,6 @@ export default function ScrollTrial() {
     setIsPlaying(false);
     setIsPaused(false);
     
-    // Three.jsシーンの状態をリセット
-    if (threeScene) {
-      threeScene.updateGameState(false, false);
-      threeScene.updateByScroll(0);
-    }
-    
     if (intervalId) {
       clearInterval(intervalId);
     }
@@ -138,8 +117,6 @@ export default function ScrollTrial() {
     const milliseconds = ms % 1000;
     return `${seconds}.${milliseconds.toString().padStart(3, "0")}秒`;
   };
-
-  const progress = () => Math.min((scrollDistanceMeters() / targetDistance) * 100, 100);
 
   // イベントリスナーの登録
   onMount(() => {
