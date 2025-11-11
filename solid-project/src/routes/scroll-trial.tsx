@@ -7,6 +7,8 @@ export default function ScrollTrial() {
   const [startTime, setStartTime] = createSignal<number | null>(null);
   const [elapsedTime, setElapsedTime] = createSignal(0);
   const [isPlaying, setIsPlaying] = createSignal(false);
+  const [isPaused, setIsPaused] = createSignal(false);
+  const [pausedTime, setPausedTime] = createSignal(0);
   const [bestTime, setBestTime] = createSignal<number | null>(null);
 
   const targetDistance = 10000; // 10000px
@@ -17,21 +19,47 @@ export default function ScrollTrial() {
     const distance = window.scrollY;
     setScrollDistance(distance);
 
+    // 一時停止中にスクロールしたら再開
+    if (isPaused()) {
+      resumeGame();
+      return;
+    }
+
     if (!isPlaying() && distance > 0) {
       startGame();
     }
 
-    if (isPlaying() && distance >= targetDistance) {
+    if (isPlaying() && !isPaused() && distance >= targetDistance) {
       finishGame();
     }
   };
 
   const startGame = () => {
     setIsPlaying(true);
-    setStartTime(Date.now());
+    setIsPaused(false);
+    setStartTime(Date.now() - pausedTime());
     
     intervalId = window.setInterval(() => {
-      if (startTime()) {
+      if (startTime() && !isPaused()) {
+        setElapsedTime(Date.now() - startTime()!);
+      }
+    }, 10);
+  };
+
+  const pauseGame = () => {
+    setIsPaused(true);
+    setPausedTime(elapsedTime());
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+  };
+
+  const resumeGame = () => {
+    setIsPaused(false);
+    setStartTime(Date.now() - pausedTime());
+    
+    intervalId = window.setInterval(() => {
+      if (startTime() && !isPaused()) {
         setElapsedTime(Date.now() - startTime()!);
       }
     }, 10);
@@ -54,7 +82,9 @@ export default function ScrollTrial() {
     setScrollDistance(0);
     setStartTime(null);
     setElapsedTime(0);
+    setPausedTime(0);
     setIsPlaying(false);
+    setIsPaused(false);
     if (intervalId) {
       clearInterval(intervalId);
     }
@@ -105,6 +135,11 @@ export default function ScrollTrial() {
               <span class="stat-value best">{formatTime(bestTime()!)}</span>
             </div>
           )}
+          {isPlaying() && !isPaused() && (
+            <button class="pause-button" onClick={pauseGame}>
+              ⏸️ 一時停止
+            </button>
+          )}
         </div>
 
         <div class="progress-bar-container">
@@ -115,6 +150,16 @@ export default function ScrollTrial() {
         {!isPlaying() && scrollDistance() === 0 && (
           <div class="instruction">
             <p>👇 下にスクロールを開始してください</p>
+          </div>
+        )}
+
+        {isPaused() && (
+          <div class="paused-banner">
+            <h2>⏸️ 一時停止中</h2>
+            <p>スクロールして再開</p>
+            <button class="reset-button" onClick={resetGame}>
+              🔄 リセット
+            </button>
           </div>
         )}
 
