@@ -1,35 +1,31 @@
 .scroll-trial-container {
   min-height: 100vh;
   background: linear-gradient(to bottom, #e3f2fd, #bbdefb);
-  padding-top: 160px; /* 共通ヘッダー(80px) + 固定ヘッダー(80px)の高さ分 */
+  padding: 0; /* 全方向のpaddingを0に */
+  margin: 0;
 }
 
-/* Three.js Canvas - 固定ヘッダーの下、画面いっぱいに固定表示 */
+/* Three.js Canvas - stats-panelの下に固定表示 */
 .threejs-canvas {
   position: fixed;
-  top: 160px; /* 共通ヘッダー(80px) + 固定ヘッダー(80px) */
   left: 0;
   right: 0;
   bottom: 0;
   width: 100%;
-  height: calc(100vh - 160px);
-  z-index: 1;
+  z-index: 0;
   pointer-events: none; /* スクロールを妨げないように */
-}
-
-.fixed-header {
-  position: fixed;
-  top: 80px; /* 共通ヘッダーの下に配置 */
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: top 0.3s ease, height 0.3s ease;
 }
 
 .game-header {
   text-align: center;
-  padding: 2rem 1rem 1rem;
+  padding: 2rem 0 1rem;
+  background: white;
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .game-header h1 {
@@ -52,6 +48,22 @@
   padding: 1rem;
   background: white;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 10;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* スクロール開始後に固定表示 */
+.stats-panel.fixed {
+  position: fixed;
+  top: 80px; /* 共通ヘッダーの下に配置 */
+  left: 0;
+  right: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .pause-button {

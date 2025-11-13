@@ -15,7 +15,7 @@ export default function ScrollTrial() {
   const [pausedTime, setPausedTime] = createSignal(0);
   const [bestTime, setBestTime] = createSignal<number | null>(null);
 
-  const targetDistance = 10;
+  const targetDistance = 200;
 
   // ディスプレイの物理的なサイズを推定（96 DPI を基準とし、devicePixelRatioを考慮）
   const pixelToMeter = () => {
@@ -26,7 +26,6 @@ export default function ScrollTrial() {
   };
 
   let intervalId: number | undefined;
-  let lastScrollY = 0;
 
   // wheelイベント（マウス/トラックパッドのスクロール）を処理
   const handleWheel = (e: WheelEvent) => {
@@ -66,8 +65,6 @@ export default function ScrollTrial() {
     if (isPlaying() && !isPaused() && meters >= targetDistance) {
       finishGame();
     }
-    
-    lastScrollY = distance;
   };
 
   // キーボードによるスクロールを防止
@@ -189,40 +186,43 @@ export default function ScrollTrial() {
     <main class="scroll-trial-container">
       <Title>スクロールタイムアタック - All In On Stupid</Title>
 
-      {/* Three.js 3D Canvas - 固定ヘッダーの下、画面いっぱいに固定表示 */}
+      <div class="game-header">
+        <h1>🏃 スクロールタイムアタック</h1>
+        <p>できるだけ早く一番下までスクロールしよう！</p>
+      </div>
+
+      {/* スクロール開始後に固定表示される統計パネル */}
+      <div class={`stats-panel ${isPlaying() ? 'fixed' : ''}`}>
+        <div class="stat-item">
+          <span class="stat-label">距離</span>
+          <span class="stat-value">{scrollDistanceMeters().toFixed(2)}m</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">タイム</span>
+          <span class="stat-value">{formatTime(elapsedTime())}</span>
+        </div>
+        {bestTime() && (
+          <div class="stat-item">
+            <span class="stat-label">ベストタイム</span>
+            <span class="stat-value best">{formatTime(bestTime()!)}</span>
+          </div>
+        )}
+        {isPlaying() && !isPaused() && (
+          <button class="pause-button" onClick={pauseGame}>
+            ⏸️ 一時停止
+          </button>
+        )}
+      </div>
+
+      {/* Three.js 3D Canvas - stats-panelの下に固定表示 */}
       <canvas 
         ref={canvasRef}
         class="threejs-canvas"
+        style={{
+          top: isPlaying() ? '160px' : '200px',
+          height: isPlaying() ? 'calc(100vh - 160px)' : 'calc(100vh - 200px)'
+        }}
       />
-
-      <div class="fixed-header">
-        <div class="game-header">
-          <h1>🏃 スクロールタイムアタック</h1>
-          <p>できるだけ早く一番下までスクロールしよう！</p>
-        </div>
-
-        <div class="stats-panel">
-          <div class="stat-item">
-            <span class="stat-label">距離</span>
-            <span class="stat-value">{scrollDistanceMeters().toFixed(2)}m</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">タイム</span>
-            <span class="stat-value">{formatTime(elapsedTime())}</span>
-          </div>
-          {bestTime() && (
-            <div class="stat-item">
-              <span class="stat-label">ベストタイム</span>
-              <span class="stat-value best">{formatTime(bestTime()!)}</span>
-            </div>
-          )}
-          {isPlaying() && !isPaused() && (
-            <button class="pause-button" onClick={pauseGame}>
-              ⏸️ 一時停止
-            </button>
-          )}
-        </div>
-      </div>
 
         {!isPlaying() && scrollDistanceMeters() === 0 && (
           <div class="instruction">
