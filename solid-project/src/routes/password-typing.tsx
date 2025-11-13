@@ -37,6 +37,7 @@ export default function PasswordTyping() {
   const [gameStartTime, setGameStartTime] = createSignal<number | null>(null);
   const [totalElapsedTime, setTotalElapsedTime] = createSignal(0);
   const [gameFinished, setGameFinished] = createSignal(false);
+  const [gameFailed, setGameFailed] = createSignal(false);
 
   let intervalId: number | undefined;
 
@@ -166,6 +167,14 @@ export default function PasswordTyping() {
           finishGame();
         }
       }, 1500);
+    } else {
+      // 不正解の場合
+      setTimeout(() => {
+        setGameFailed(true);
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+      }, 2000);
     }
   };
 
@@ -191,6 +200,7 @@ export default function PasswordTyping() {
     setGameStartTime(null);
     setTotalElapsedTime(0);
     setGameFinished(false);
+    setGameFailed(false);
     
     if (intervalId) {
       clearInterval(intervalId);
@@ -337,6 +347,29 @@ export default function PasswordTyping() {
             最初に戻る
           </button>
         </div>
+      ) : gameFailed() ? (
+        // ゲーム失敗画面
+        <div class="game-failed">
+          <h2>😢 残念！不正解</h2>
+          <div class="failed-info">
+            <div class="failed-message">
+              正解は「{questions()[currentQuestionIndex()].answer}」でした
+            </div>
+            <div class="final-stats">
+              <div class="stat-item">
+                <span class="stat-label">到達問題数</span>
+                <span class="stat-value">{currentQuestionIndex() + 1} / {gameMode()}問</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">経過時間</span>
+                <span class="stat-value">{formatTime(totalElapsedTime())}</span>
+              </div>
+            </div>
+          </div>
+          <button class="restart-button" onClick={resetGame}>
+            最初に戻る
+          </button>
+        </div>
       ) : (
         // ゲームプレイ画面
         <div class="game-play">
@@ -426,7 +459,7 @@ export default function PasswordTyping() {
                 <div class={`feedback ${isAnswerCorrect() ? "correct" : "incorrect"}`}>
                   {isAnswerCorrect() 
                     ? "✅ 正解！次の問題へ..." 
-                    : `❌ 不正解... 正解は「${questions()[currentQuestionIndex()].answer}」でした`}
+                    : `❌ 不正解...`}
                 </div>
               )}
             </div>
