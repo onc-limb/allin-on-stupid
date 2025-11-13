@@ -1,4 +1,5 @@
 import { For, type Accessor } from "solid-js";
+import "./ChoicesArea.css";
 
 type ChoicesAreaProps = {
   choices: Accessor<string[]>;

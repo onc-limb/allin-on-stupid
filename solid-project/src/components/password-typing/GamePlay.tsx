@@ -4,6 +4,7 @@ import { formatTime } from "./utils";
 import ImageMosaic from "./ImageMosaic";
 import PasswordInput from "./PasswordInput";
 import ChoicesArea from "./ChoicesArea";
+import "./GamePlay.css";
 
 type GamePlayProps = {
   currentQuestion: Accessor<Question>;

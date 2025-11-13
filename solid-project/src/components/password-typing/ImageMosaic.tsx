@@ -1,5 +1,6 @@
 import type { Accessor } from "solid-js";
 import { getMosaicFilter } from "./utils";
+import "./ImageMosaic.css";
 
 type ImageMosaicProps = {
   imageSrc: Accessor<string>;

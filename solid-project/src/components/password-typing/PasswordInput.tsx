@@ -1,4 +1,5 @@
 import { For, type Accessor } from "solid-js";
+import "./PasswordInput.css";
 
 type PasswordInputProps = {
   targetPassword: Accessor<string>;

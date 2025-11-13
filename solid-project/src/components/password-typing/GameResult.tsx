@@ -1,6 +1,7 @@
 import type { Accessor } from "solid-js";
 import type { Difficulty, GameMode } from "./types";
 import { formatTime, getDifficultyLabel } from "./utils";
+import "./GameResult.css";
 
 type GameResultProps = {
   gameFinished: Accessor<boolean>;
