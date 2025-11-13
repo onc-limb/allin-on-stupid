@@ -26,8 +26,22 @@ export default function ScrollTrial() {
   };
 
   let intervalId: number | undefined;
+  let lastScrollY = 0;
 
-  const handleScroll = () => {
+  // wheelイベント（マウス/トラックパッドのスクロール）を処理
+  const handleWheel = (e: WheelEvent) => {
+    // キーボード操作を除外（wheelイベントはマウス/トラックパッドのみ）
+    // スクロール位置を更新
+    const newScrollY = window.scrollY + e.deltaY;
+    
+    // スクロール位置の変化を監視
+    requestAnimationFrame(() => {
+      updateScrollMetrics();
+    });
+  };
+
+  // スクロール位置に基づいてメトリクスを更新
+  const updateScrollMetrics = () => {
     const distance = window.scrollY;
     
     // ピクセルをメートルに変換
@@ -51,6 +65,16 @@ export default function ScrollTrial() {
 
     if (isPlaying() && !isPaused() && meters >= targetDistance) {
       finishGame();
+    }
+    
+    lastScrollY = distance;
+  };
+
+  // キーボードによるスクロールを防止
+  const preventKeyboardScroll = (e: KeyboardEvent) => {
+    const scrollKeys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '];
+    if (scrollKeys.includes(e.key)) {
+      e.preventDefault();
     }
   };
 
@@ -120,7 +144,11 @@ export default function ScrollTrial() {
 
   // イベントリスナーの登録
   onMount(() => {
-    window.addEventListener("scroll", handleScroll);
+    // wheelイベント（マウス/トラックパッドのスクロールのみ）を監視
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    
+    // キーボードによるスクロールを防止
+    window.addEventListener("keydown", preventKeyboardScroll);
     
     // Three.jsの初期化
     if (canvasRef) {
@@ -144,7 +172,8 @@ export default function ScrollTrial() {
     window.addEventListener("resize", handleResize);
     
     onCleanup(() => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("keydown", preventKeyboardScroll);
       window.removeEventListener("resize", handleResize);
       if (intervalId) {
         clearInterval(intervalId);
