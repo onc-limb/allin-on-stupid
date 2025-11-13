@@ -9,6 +9,8 @@ export default function PasswordTyping() {
   const [elapsedTime, setElapsedTime] = createSignal(0);
   const [isComplete, setIsComplete] = createSignal(false);
   const [difficulty, setDifficulty] = createSignal<"easy" | "medium" | "hard">("medium");
+  const [mosaicLevel, setMosaicLevel] = createSignal(5); // 5が最も強いモザイク、0がモザイクなし
+  const [completedCount, setCompletedCount] = createSignal(0); // 完了した回数
   const [stats, setStats] = createSignal({
     accuracy: 100,
     wpm: 0,
@@ -17,6 +19,10 @@ export default function PasswordTyping() {
   });
 
   let intervalId: number | undefined;
+
+  const imageList = [
+    { src: "/images/password/fd401322.jpg", answer: "フルーツ" }
+  ];
 
   const generatePassword = (level: "easy" | "medium" | "hard") => {
     const lengths = { easy: 8, medium: 12, hard: 16 };
@@ -44,6 +50,12 @@ export default function PasswordTyping() {
     setStartTime(null);
     setElapsedTime(0);
     setIsComplete(false);
+  };
+
+  // モザイクのブラー度合いを計算（5段階）
+  const getMosaicBlur = () => {
+    const blurValues = [0, 5, 10, 20, 40]; // レベル0〜4に対応するblur値
+    return blurValues[Math.min(mosaicLevel(), 4)];
   };
 
   const handleInput = (e: InputEvent) => {
@@ -81,6 +93,14 @@ export default function PasswordTyping() {
       totalAttempts: stats().totalAttempts + 1,
       bestTime: !stats().bestTime || time < stats().bestTime! ? time : stats().bestTime,
     });
+
+    // 完了回数を増やし、モザイクレベルを減らす
+    const newCompletedCount = completedCount() + 1;
+    setCompletedCount(newCompletedCount);
+    
+    // 1回完了するごとにモザイクレベルを1下げる（最小0）
+    const newMosaicLevel = Math.max(0, 5 - newCompletedCount);
+    setMosaicLevel(newMosaicLevel);
   };
 
   const formatTime = (ms: number) => {
@@ -160,6 +180,23 @@ export default function PasswordTyping() {
       </div>
 
       <div class="game-area">
+        {/* モザイク付き画像表示 */}
+        <div class="image-container">
+          <img 
+            src={imageList[0].src} 
+            alt="問題画像" 
+            class="puzzle-image"
+            style={{
+              filter: `blur(${getMosaicBlur()}px)`,
+              transition: "filter 0.5s ease"
+            }}
+          />
+          <div class="mosaic-info">
+            モザイクレベル: {mosaicLevel()} / 5
+            {mosaicLevel() === 0 && <span class="clear-badge"> ✨ クリア！</span>}
+          </div>
+        </div>
+
         <div class="password-display">
           {targetPassword()
             .split("")
