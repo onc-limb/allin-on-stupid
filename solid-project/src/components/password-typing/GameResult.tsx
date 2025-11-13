@@ -10,7 +10,6 @@ type GameResultProps = {
   difficulty: Accessor<Difficulty>;
   gameMode: Accessor<GameMode>;
   currentQuestionIndex: Accessor<number>;
-  correctAnswer: Accessor<string>;
   onResetGame: () => void;
 };
 
@@ -49,9 +48,6 @@ export default function GameResult(props: GameResultProps) {
       <div class="game-failed">
         <h2>😢 残念！不正解</h2>
         <div class="failed-info">
-          <div class="failed-message">
-            正解は「{props.correctAnswer()}」でした
-          </div>
           <div class="sarcasm-message">
             <p>これ以上時間を無駄にしなくてよかったですね</p>
             <p class="thank-you">(遊んでくれてありがとう)</p>

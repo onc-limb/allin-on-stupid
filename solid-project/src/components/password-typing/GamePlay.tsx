@@ -52,7 +52,6 @@ export default function GamePlay(props: GamePlayProps) {
         {/* 選択肢エリア */}
         <ChoicesArea 
           choices={() => props.currentQuestion().choices}
-          correctAnswer={() => props.currentQuestion().answer}
           selectedChoice={props.selectedChoice}
           isAnswerCorrect={props.isAnswerCorrect}
           onChoiceSelect={props.onChoiceSelect}

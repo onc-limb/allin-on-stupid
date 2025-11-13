@@ -1,7 +1,14 @@
+// クライアント側で扱う問題データ（答えは含まない）
 export type Question = {
+  id: string;
   src: string;
-  answer: string;
   choices: string[];
+};
+
+// サーバーから返される検証結果
+export type VerifyResult = {
+  correct: boolean;
+  answer?: string;
 };
 
 export type GameMode = 1 | 3 | 5;

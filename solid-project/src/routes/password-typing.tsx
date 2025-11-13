@@ -1,9 +1,8 @@
 import { Title } from "@solidjs/meta";
 import { createSignal } from "solid-js";
 import "./password-typing.css";
-import type { Question, GameMode, Difficulty } from "~/components/password-typing/types";
+import type { Question, GameMode, Difficulty, VerifyResult } from "~/components/password-typing/types";
 import { generatePassword } from "~/components/password-typing/utils";
-import { imagePool } from "~/components/password-typing/constants";
 import GameSettings from "~/components/password-typing/GameSettings";
 import GamePlay from "~/components/password-typing/GamePlay";
 import GameResult from "~/components/password-typing/GameResult";
@@ -38,27 +37,32 @@ export default function PasswordTyping() {
 
   let intervalId: number | undefined;
 
-  const startGame = () => {
-    // 問題をランダムに選択
-    const selectedQuestions: Question[] = [];
-    for (let i = 0; i < gameMode(); i++) {
-      const randomQuestion = imagePool[Math.floor(Math.random() * imagePool.length)];
-      selectedQuestions.push(randomQuestion);
-    }
-    
-    setQuestions(selectedQuestions);
-    setCurrentQuestionIndex(0);
-    setGameStarted(true);
-    setGameStartTime(Date.now());
-    
-    // タイマー開始
-    intervalId = window.setInterval(() => {
-      if (gameStartTime()) {
-        setTotalElapsedTime(Date.now() - gameStartTime()!);
+  const startGame = async () => {
+    try {
+      // サーバーから問題を取得
+      const response = await fetch(`/api/password-typing/questions?count=${gameMode()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch questions');
       }
-    }, 10);
-    
-    loadNextQuestion();
+      const selectedQuestions: Question[] = await response.json();
+      
+      setQuestions(selectedQuestions);
+      setCurrentQuestionIndex(0);
+      setGameStarted(true);
+      setGameStartTime(Date.now());
+      
+      // タイマー開始
+      intervalId = window.setInterval(() => {
+        if (gameStartTime()) {
+          setTotalElapsedTime(Date.now() - gameStartTime()!);
+        }
+      }, 10);
+      
+      loadNextQuestion();
+    } catch (error) {
+      console.error('Failed to start game:', error);
+      alert('ゲームの開始に失敗しました。再度お試しください。');
+    }
   };
 
   const loadNextQuestion = () => {
@@ -88,31 +92,56 @@ export default function PasswordTyping() {
     }
   };
 
-  const handleChoiceSelect = (choice: string) => {
+  const handleChoiceSelect = async (choice: string) => {
     if (selectedChoice()) return;
     
     setSelectedChoice(choice);
-    const currentQuestion = questions()[currentQuestionIndex()];
-    const correct = choice === currentQuestion.answer;
-    setIsAnswerCorrect(correct);
     
-    if (correct) {
-      setTimeout(() => {
-        const nextIndex = currentQuestionIndex() + 1;
-        if (nextIndex < questions().length) {
-          setCurrentQuestionIndex(nextIndex);
-          loadNextQuestion();
-        } else {
-          finishGame();
-        }
-      }, 1500);
-    } else {
-      setTimeout(() => {
-        setGameFailed(true);
-        if (intervalId) {
-          clearInterval(intervalId);
-        }
-      }, 2000);
+    try {
+      // サーバーに答えを送信して検証
+      const currentQuestion = questions()[currentQuestionIndex()];
+      const response = await fetch('/api/password-typing/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionId: currentQuestion.id,
+          userAnswer: choice
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to verify answer');
+      }
+      
+      const result: VerifyResult = await response.json();
+      const correct = result.correct;
+      
+      setIsAnswerCorrect(correct);
+      
+      if (correct) {
+        setTimeout(() => {
+          const nextIndex = currentQuestionIndex() + 1;
+          if (nextIndex < questions().length) {
+            setCurrentQuestionIndex(nextIndex);
+            loadNextQuestion();
+          } else {
+            finishGame();
+          }
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          setGameFailed(true);
+          if (intervalId) {
+            clearInterval(intervalId);
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Failed to verify answer:', error);
+      alert('答えの検証に失敗しました。');
+      setSelectedChoice(null);
     }
   };
 
@@ -170,7 +199,6 @@ export default function PasswordTyping() {
           difficulty={difficulty}
           gameMode={gameMode}
           currentQuestionIndex={currentQuestionIndex}
-          correctAnswer={() => questions()[currentQuestionIndex()].answer}
           onResetGame={resetGame}
         />
       ) : (

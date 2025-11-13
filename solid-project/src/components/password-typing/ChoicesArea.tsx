@@ -3,7 +3,6 @@ import "./ChoicesArea.css";
 
 type ChoicesAreaProps = {
   choices: Accessor<string[]>;
-  correctAnswer: Accessor<string>;
   selectedChoice: Accessor<string | null>;
   isAnswerCorrect: Accessor<boolean | null>;
   onChoiceSelect: (choice: string) => void;
@@ -23,7 +22,7 @@ export default function ChoicesArea(props: ChoicesAreaProps) {
                     ? "correct"
                     : "incorrect"
                   : ""
-              } ${props.selectedChoice() && choice === props.correctAnswer() ? "show-answer" : ""}`}
+              }`}
               onClick={() => props.onChoiceSelect(choice)}
               disabled={props.selectedChoice() !== null}
             >
