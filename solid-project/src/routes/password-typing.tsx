@@ -9,12 +9,12 @@ type Question = {
 };
 
 type GameMode = 1 | 3 | 5;
-type Difficulty = "easy" | "normal" | "hard" ;
+type Difficulty = "easy" | "normal" | "hard";
 
 export default function PasswordTyping() {
   // ゲーム設定
-  const [gameMode, setGameMode] = createSignal<GameMode | null>(null); // 問題数
-  const [difficulty, setDifficulty] = createSignal<Difficulty | null>(null); // 難易度
+  const [gameMode, setGameMode] = createSignal<GameMode>(3); // 問題数（デフォルト3問）
+  const [difficulty, setDifficulty] = createSignal<Difficulty>("normal"); // 難易度（デフォルト中級）
   const [gameStarted, setGameStarted] = createSignal(false);
   
   // 現在の問題
@@ -77,7 +77,7 @@ export default function PasswordTyping() {
       hard: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?", // 英大小文字+数字+記号
     };
     
-    const charset = charsets[difficulty()!];
+    const charset = charsets[difficulty()];
     let password = "";
     for (let i = 0; i < length; i++) {
       password += charset[Math.floor(Math.random() * charset.length)];
@@ -94,13 +94,10 @@ export default function PasswordTyping() {
     return shuffled;
   };
 
-  const startGame = (mode: GameMode, diff: Difficulty) => {
-    setGameMode(mode);
-    setDifficulty(diff);
-    
+  const startGame = () => {
     // 問題をランダムに選択（同じ画像でも良い場合）
     const selectedQuestions: Question[] = [];
-    for (let i = 0; i < mode; i++) {
+    for (let i = 0; i < gameMode(); i++) {
       const randomQuestion = imagePool[Math.floor(Math.random() * imagePool.length)];
       selectedQuestions.push(randomQuestion);
     }
@@ -180,8 +177,8 @@ export default function PasswordTyping() {
   };
 
   const resetGame = () => {
-    setGameMode(null);
-    setDifficulty(null);
+    setGameMode(3);
+    setDifficulty("normal");
     setGameStarted(false);
     setCurrentQuestionIndex(0);
     setQuestions([]);
@@ -253,51 +250,70 @@ export default function PasswordTyping() {
       {!gameStarted() ? (
         // ゲーム開始前の選択画面
         <div class="selection-screen">
-          {!difficulty() ? (
-            // 難易度選択
-            <div class="difficulty-selector-screen">
-              <h2>難易度を選択してください</h2>
-              <div class="difficulty-buttons">
-                <button class="difficulty-btn easy" onClick={() => setDifficulty("easy")}>
-                  <div class="difficulty-name">{getDifficultyLabel("easy")}</div>
-                  <div class="difficulty-desc">{getDifficultyDescription("easy")}</div>
+          <div class="game-settings">
+            <h2>ゲーム設定</h2>
+            
+            {/* 難易度選択 */}
+            <div class="setting-section">
+              <h3>難易度</h3>
+              <div class="difficulty-options">
+                <button 
+                  class={`difficulty-option ${difficulty() === "easy" ? "selected" : ""}`}
+                  onClick={() => setDifficulty("easy")}
+                >
+                  <div class="option-name">{getDifficultyLabel("easy")}</div>
+                  <div class="option-desc">{getDifficultyDescription("easy")}</div>
                 </button>
-                <button class="difficulty-btn normal" onClick={() => setDifficulty("normal")}>
-                  <div class="difficulty-name">{getDifficultyLabel("normal")}</div>
-                  <div class="difficulty-desc">{getDifficultyDescription("normal")}</div>
+                <button 
+                  class={`difficulty-option ${difficulty() === "normal" ? "selected" : ""}`}
+                  onClick={() => setDifficulty("normal")}
+                >
+                  <div class="option-name">{getDifficultyLabel("normal")}</div>
+                  <div class="option-desc">{getDifficultyDescription("normal")}</div>
                 </button>
-                <button class="difficulty-btn hard" onClick={() => setDifficulty("hard")}>
-                  <div class="difficulty-name">{getDifficultyLabel("hard")}</div>
-                  <div class="difficulty-desc">{getDifficultyDescription("hard")}</div>
+                <button 
+                  class={`difficulty-option ${difficulty() === "hard" ? "selected" : ""}`}
+                  onClick={() => setDifficulty("hard")}
+                >
+                  <div class="option-name">{getDifficultyLabel("hard")}</div>
+                  <div class="option-desc">{getDifficultyDescription("hard")}</div>
                 </button>
               </div>
             </div>
-          ) : (
-            // 問題数選択
-            <div class="mode-selector">
-              <h2>問題数を選択してください</h2>
-              <div class="selected-difficulty">
-                選択した難易度: <strong>{getDifficultyLabel(difficulty()!)}</strong> ({getDifficultyDescription(difficulty()!)})
+
+            {/* 問題数選択 */}
+            <div class="setting-section">
+              <h3>問題数</h3>
+              <div class="mode-options">
+                <button 
+                  class={`mode-option ${gameMode() === 1 ? "selected" : ""}`}
+                  onClick={() => setGameMode(1)}
+                >
+                  <div class="option-number">1問</div>
+                  <div class="option-desc">クイック</div>
+                </button>
+                <button 
+                  class={`mode-option ${gameMode() === 3 ? "selected" : ""}`}
+                  onClick={() => setGameMode(3)}
+                >
+                  <div class="option-number">3問</div>
+                  <div class="option-desc">スタンダード</div>
+                </button>
+                <button 
+                  class={`mode-option ${gameMode() === 5 ? "selected" : ""}`}
+                  onClick={() => setGameMode(5)}
+                >
+                  <div class="option-number">5問</div>
+                  <div class="option-desc">チャレンジ</div>
+                </button>
               </div>
-              <div class="mode-buttons">
-                <button class="mode-btn" onClick={() => startGame(1, difficulty()!)}>
-                  <div class="mode-number">1問</div>
-                  <div class="mode-desc">クイック</div>
-                </button>
-                <button class="mode-btn" onClick={() => startGame(3, difficulty()!)}>
-                  <div class="mode-number">3問</div>
-                  <div class="mode-desc">スタンダード</div>
-                </button>
-                <button class="mode-btn" onClick={() => startGame(5, difficulty()!)}>
-                  <div class="mode-number">5問</div>
-                  <div class="mode-desc">チャレンジ</div>
-                </button>
-              </div>
-              <button class="back-button" onClick={() => setDifficulty(null)}>
-                ← 難易度を変更する
-              </button>
             </div>
-          )}
+
+            {/* スタートボタン */}
+            <button class="start-button" onClick={startGame}>
+              🚀 START
+            </button>
+          </div>
         </div>
       ) : gameFinished() ? (
         // ゲーム終了画面
