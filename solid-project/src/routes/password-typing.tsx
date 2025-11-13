@@ -329,6 +329,10 @@ export default function PasswordTyping() {
         // ゲーム終了画面
         <div class="game-finished">
           <h2>🎉 全問正解！</h2>
+          <div class="congratulation-message">
+            <p>お疲れ様でした！あなたは<strong>{Math.floor(totalElapsedTime() / 1000)}秒を無駄にしました</strong>。</p>
+            <p class="thank-you">(遊んでくれてありがとう)</p>
+          </div>
           <div class="final-stats">
             <div class="stat-item">
               <span class="stat-label">難易度</span>
@@ -354,6 +358,10 @@ export default function PasswordTyping() {
           <div class="failed-info">
             <div class="failed-message">
               正解は「{questions()[currentQuestionIndex()].answer}」でした
+            </div>
+            <div class="sarcasm-message">
+              <p>これ以上時間を無駄にしなくてよかったですね</p>
+              <p class="thank-you">(遊んでくれてありがとう)</p>
             </div>
             <div class="final-stats">
               <div class="stat-item">
