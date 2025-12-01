@@ -1,194 +1,222 @@
 import { Title } from "@solidjs/meta";
-import { createSignal, onMount } from "solid-js";
+import { createSignal } from "solid-js";
 import "./password-typing.css";
+import type { Question, GameMode, Difficulty, VerifyResult } from "~/components/password-typing/types";
+import { generatePassword } from "~/components/password-typing/utils";
+import GameSettings from "~/components/password-typing/GameSettings";
+import GamePlay from "~/components/password-typing/GamePlay";
+import GameResult from "~/components/password-typing/GameResult";
 
 export default function PasswordTyping() {
+  // ゲーム設定
+  const [gameMode, setGameMode] = createSignal<GameMode>(3);
+  const [difficulty, setDifficulty] = createSignal<Difficulty>("normal");
+  const [gameStarted, setGameStarted] = createSignal(false);
+  
+  // 現在の問題
+  const [currentQuestionIndex, setCurrentQuestionIndex] = createSignal(0);
+  const [questions, setQuestions] = createSignal<Question[]>([]);
+  
+  // パスワード入力
   const [targetPassword, setTargetPassword] = createSignal("");
   const [userInput, setUserInput] = createSignal("");
-  const [startTime, setStartTime] = createSignal<number | null>(null);
-  const [elapsedTime, setElapsedTime] = createSignal(0);
-  const [isComplete, setIsComplete] = createSignal(false);
-  const [difficulty, setDifficulty] = createSignal<"easy" | "medium" | "hard">("medium");
-  const [stats, setStats] = createSignal({
-    accuracy: 100,
-    wpm: 0,
-    totalAttempts: 0,
-    bestTime: null as number | null,
-  });
+  const [passwordsCleared, setPasswordsCleared] = createSignal(0);
+  
+  // モザイク
+  const [mosaicLevel, setMosaicLevel] = createSignal(100);
+  
+  // 選択肢
+  const [selectedChoice, setSelectedChoice] = createSignal<string | null>(null);
+  const [isAnswerCorrect, setIsAnswerCorrect] = createSignal<boolean | null>(null);
+  
+  // タイマー
+  const [gameStartTime, setGameStartTime] = createSignal<number | null>(null);
+  const [totalElapsedTime, setTotalElapsedTime] = createSignal(0);
+  const [gameFinished, setGameFinished] = createSignal(false);
+  const [gameFailed, setGameFailed] = createSignal(false);
 
   let intervalId: number | undefined;
 
-  const generatePassword = (level: "easy" | "medium" | "hard") => {
-    const lengths = { easy: 8, medium: 12, hard: 16 };
-    const charSets = {
-      easy: "abcdefghijklmnopqrstuvwxyz0123456789",
-      medium: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-      hard: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?",
-    };
-
-    const length = lengths[level];
-    const charset = charSets[level];
-    let password = "";
-
-    for (let i = 0; i < length; i++) {
-      password += charset[Math.floor(Math.random() * charset.length)];
-    }
-
-    return password;
-  };
-
-  const startNewGame = () => {
-    const newPassword = generatePassword(difficulty());
-    setTargetPassword(newPassword);
-    setUserInput("");
-    setStartTime(null);
-    setElapsedTime(0);
-    setIsComplete(false);
-  };
-
-  const handleInput = (e: InputEvent) => {
-    const input = (e.target as HTMLInputElement).value;
-    setUserInput(input);
-
-    if (!startTime() && input.length > 0) {
-      setStartTime(Date.now());
+  const startGame = async () => {
+    try {
+      // サーバーから問題を取得
+      const response = await fetch(`/api/password-typing/questions?count=${gameMode()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch questions');
+      }
+      const selectedQuestions: Question[] = await response.json();
+      
+      setQuestions(selectedQuestions);
+      setCurrentQuestionIndex(0);
+      setGameStarted(true);
+      setGameStartTime(Date.now());
+      
+      // タイマー開始
       intervalId = window.setInterval(() => {
-        if (startTime()) {
-          setElapsedTime(Date.now() - startTime()!);
+        if (gameStartTime()) {
+          setTotalElapsedTime(Date.now() - gameStartTime()!);
         }
       }, 10);
+      
+      loadNextQuestion();
+    } catch (error) {
+      console.error('Failed to start game:', error);
+      alert('ゲームの開始に失敗しました。再度お試しください。');
     }
+  };
+
+  const loadNextQuestion = () => {
+    setTargetPassword(generatePassword(difficulty()));
+    setUserInput("");
+    setPasswordsCleared(0);
+    setMosaicLevel(100);
+    setSelectedChoice(null);
+    setIsAnswerCorrect(null);
+  };
+
+  const handlePasswordInput = (input: string) => {
+    setUserInput(input);
 
     if (input === targetPassword()) {
-      finishGame();
+      // パスワード正解
+      const newCount = passwordsCleared() + 1;
+      setPasswordsCleared(newCount);
+      
+      // モザイクレベルを減らす
+      const newMosaicLevel = Math.max(0, 100 - newCount * 10);
+      setMosaicLevel(newMosaicLevel);
+      
+      // 次のパスワードを生成
+      setTargetPassword(generatePassword(difficulty()));
+      setUserInput("");
+    }
+  };
+
+  const handleChoiceSelect = async (choice: string) => {
+    if (selectedChoice()) return;
+    
+    setSelectedChoice(choice);
+    
+    try {
+      // サーバーに答えを送信して検証
+      const currentQuestion = questions()[currentQuestionIndex()];
+      const response = await fetch('/api/password-typing/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionId: currentQuestion.id,
+          userAnswer: choice
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to verify answer');
+      }
+      
+      const result: VerifyResult = await response.json();
+      const correct = result.correct;
+      
+      setIsAnswerCorrect(correct);
+      
+      if (correct) {
+        setTimeout(() => {
+          const nextIndex = currentQuestionIndex() + 1;
+          if (nextIndex < questions().length) {
+            setCurrentQuestionIndex(nextIndex);
+            loadNextQuestion();
+          } else {
+            finishGame();
+          }
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          setGameFailed(true);
+          if (intervalId) {
+            clearInterval(intervalId);
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Failed to verify answer:', error);
+      alert('答えの検証に失敗しました。');
+      setSelectedChoice(null);
     }
   };
 
   const finishGame = () => {
-    setIsComplete(true);
+    setGameFinished(true);
     if (intervalId) {
       clearInterval(intervalId);
     }
-
-    const time = elapsedTime();
-    const chars = targetPassword().length;
-    const minutes = time / 60000;
-    const wpm = Math.round(chars / 5 / minutes);
-
-    setStats({
-      accuracy: 100,
-      wpm,
-      totalAttempts: stats().totalAttempts + 1,
-      bestTime: !stats().bestTime || time < stats().bestTime! ? time : stats().bestTime,
-    });
   };
 
-  const formatTime = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    const milliseconds = ms % 1000;
-    return `${seconds}.${milliseconds.toString().padStart(3, "0")}秒`;
+  const resetGame = () => {
+    setGameMode(3);
+    setDifficulty("normal");
+    setGameStarted(false);
+    setCurrentQuestionIndex(0);
+    setQuestions([]);
+    setTargetPassword("");
+    setUserInput("");
+    setPasswordsCleared(0);
+    setMosaicLevel(100);
+    setSelectedChoice(null);
+    setIsAnswerCorrect(null);
+    setGameStartTime(null);
+    setTotalElapsedTime(0);
+    setGameFinished(false);
+    setGameFailed(false);
+    
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
   };
-
-  const getCharacterClass = (index: number) => {
-    if (index >= userInput().length) return "";
-    return userInput()[index] === targetPassword()[index] ? "correct" : "incorrect";
-  };
-
-  onMount(() => {
-    startNewGame();
-  });
 
   return (
     <main class="password-typing-container">
-      <Title>パスワードタイピング練習 - All In On Stupid</Title>
+      <Title>モザイク解除ゲーム - All In On Stupid</Title>
 
       <div class="game-header">
-        <h1>🔐 パスワードタイピング練習</h1>
-        <p>表示されたパスワードを正確に入力しよう！</p>
+        <h1>🔐 モザイク解除ゲーム</h1>
+        <p>パスワードを入力してモザイクを解除し、画像の内容を当てよう！</p>
       </div>
 
-      <div class="difficulty-selector">
-        <label>難易度:</label>
-        <button
-          class={`difficulty-btn ${difficulty() === "easy" ? "active" : ""}`}
-          onClick={() => {
-            setDifficulty("easy");
-            startNewGame();
-          }}
-        >
-          初級 (8文字)
-        </button>
-        <button
-          class={`difficulty-btn ${difficulty() === "medium" ? "active" : ""}`}
-          onClick={() => {
-            setDifficulty("medium");
-            startNewGame();
-          }}
-        >
-          中級 (12文字)
-        </button>
-        <button
-          class={`difficulty-btn ${difficulty() === "hard" ? "active" : ""}`}
-          onClick={() => {
-            setDifficulty("hard");
-            startNewGame();
-          }}
-        >
-          上級 (16文字)
-        </button>
-      </div>
-
-      <div class="stats-panel">
-        <div class="stat-item">
-          <span class="stat-label">タイム</span>
-          <span class="stat-value">{formatTime(elapsedTime())}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">WPM</span>
-          <span class="stat-value">{stats().wpm}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">挑戦回数</span>
-          <span class="stat-value">{stats().totalAttempts}</span>
-        </div>
-        {stats().bestTime && (
-          <div class="stat-item">
-            <span class="stat-label">ベストタイム</span>
-            <span class="stat-value best">{formatTime(stats().bestTime!)}</span>
-          </div>
-        )}
-      </div>
-
-      <div class="game-area">
-        <div class="password-display">
-          {targetPassword()
-            .split("")
-            .map((char, index) => (
-              <span class={`char ${getCharacterClass(index)}`}>{char}</span>
-            ))}
-        </div>
-
-        <input
-          type="text"
-          class="password-input"
-          value={userInput()}
-          onInput={handleInput}
-          placeholder="ここに入力..."
-          disabled={isComplete()}
-          autofocus
+      {!gameStarted() ? (
+        <GameSettings 
+          gameMode={gameMode}
+          difficulty={difficulty}
+          onGameModeChange={setGameMode}
+          onDifficultyChange={setDifficulty}
+          onStartGame={startGame}
         />
-
-        {isComplete() && (
-          <div class="complete-message">
-            <h2>🎉 完了！</h2>
-            <p>タイム: {formatTime(elapsedTime())}</p>
-            <p>WPM: {stats().wpm}</p>
-            <button class="next-button" onClick={startNewGame}>
-              次の問題
-            </button>
-          </div>
-        )}
-      </div>
+      ) : gameFinished() || gameFailed() ? (
+        <GameResult 
+          gameFinished={gameFinished}
+          gameFailed={gameFailed}
+          totalElapsedTime={totalElapsedTime}
+          difficulty={difficulty}
+          gameMode={gameMode}
+          currentQuestionIndex={currentQuestionIndex}
+          onResetGame={resetGame}
+        />
+      ) : (
+        <GamePlay 
+          currentQuestion={() => questions()[currentQuestionIndex()]}
+          currentQuestionIndex={currentQuestionIndex}
+          gameMode={gameMode}
+          totalElapsedTime={totalElapsedTime}
+          mosaicLevel={mosaicLevel}
+          targetPassword={targetPassword}
+          userInput={userInput}
+          passwordsCleared={passwordsCleared}
+          selectedChoice={selectedChoice}
+          isAnswerCorrect={isAnswerCorrect}
+          onPasswordInput={handlePasswordInput}
+          onChoiceSelect={handleChoiceSelect}
+        />
+      )}
     </main>
   );
 }

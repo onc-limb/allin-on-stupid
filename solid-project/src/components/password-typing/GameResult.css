@@ -1,0 +1,153 @@
+/* ゲーム終了・失敗画面共通 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ゲーム終了画面 */
+.game-finished {
+  text-align: center;
+  padding: 3rem;
+  animation: fadeIn 0.5s ease;
+}
+
+.game-finished h2 {
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  color: #2c3e50;
+}
+
+.congratulation-message {
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-radius: 12px;
+  border: 3px solid #ffc107;
+}
+
+.congratulation-message p {
+  font-size: 1.4rem;
+  color: #2c3e50;
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.congratulation-message strong {
+  color: #e74c3c;
+  font-size: 1.5rem;
+}
+
+.congratulation-message .thank-you {
+  font-size: 1rem;
+  color: #7f8c8d;
+  margin-top: 0.5rem;
+}
+
+.final-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #7f8c8d;
+  font-weight: bold;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.stat-value.highlight {
+  color: #667eea;
+  font-size: 2.5rem;
+}
+
+.restart-button {
+  padding: 1rem 3rem;
+  font-size: 1.3rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.restart-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+/* ゲーム失敗画面 */
+.game-failed {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.5s ease;
+}
+
+.game-failed h2 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  color: #e74c3c;
+}
+
+.failed-info {
+  margin-bottom: 3rem;
+}
+
+.failed-message {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.sarcasm-message {
+  margin-bottom: 2rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 8px;
+  border: 2px solid #4caf50;
+}
+
+.sarcasm-message p {
+  font-size: 1.2rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.sarcasm-message .thank-you {
+  font-size: 1rem;
+  color: #7f8c8d;
+  margin-top: 0.5rem;
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .final-stats {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
