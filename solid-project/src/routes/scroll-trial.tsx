@@ -7,11 +7,6 @@ export default function ScrollTrial() {
     <main class="scroll-trial-container">
       <Title>スクロールタイムアタック - All In On Stupid</Title>
 
-      <div class="game-header">
-        <h1>🏃 スクロールタイムアタック</h1>
-        <p>できるだけ早く一番下までスクロールしよう！</p>
-      </div>
-
       <ScrollTrialGame />
     </main>
   );

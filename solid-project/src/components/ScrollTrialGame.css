@@ -1,13 +1,46 @@
-/* Three.js Canvas - stats-panelの下に固定表示 */
+/* Three.js Canvas - stats-panelの下から開始 */
 .threejs-canvas {
   position: fixed;
+  top: 140px;
+  /* 共通ヘッダー(80px) + stats-panel(約60px) の下から開始 */
   left: 0;
   right: 0;
   bottom: 0;
   width: 100%;
+  height: calc(100vh - 140px);
   z-index: 0;
-  pointer-events: none; /* スクロールを妨げないように */
-  transition: top 0.3s ease, height 0.3s ease;
+  pointer-events: none;
+  /* スクロールを妨げないように */
+}
+
+/* ゲームヘッダー - スクロール開始前のみ表示、stats-panelの下に配置 */
+.game-header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  position: fixed;
+  top: 160px;
+  /* stats-panelの下に配置 */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  width: auto;
+  max-width: 90%;
+  border-radius: 16px;
+  box-sizing: border-box;
+  backdrop-filter: blur(10px);
+}
+
+.game-header h1 {
+  font-size: 2rem;
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.game-header p {
+  font-size: 1rem;
+  margin: 0;
+  color: #666;
 }
 
 .stats-panel {
@@ -16,23 +49,16 @@
   align-items: center;
   gap: 2rem;
   padding: 1rem;
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
   flex-wrap: wrap;
-  position: relative;
-  z-index: 10;
-  transition: all 0.3s ease;
-  width: 100%;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-/* スクロール開始後に固定表示 */
-.stats-panel.fixed {
   position: fixed;
-  top: 80px; /* 共通ヘッダーの下に配置 */
+  top: 80px;
+  /* 共通ヘッダーの下に固定配置 */
   left: 0;
   right: 0;
   z-index: 100;
+  box-sizing: border-box;
+  backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -76,17 +102,40 @@
 }
 
 .instruction {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 2rem;
   font-size: 1.5rem;
-  color: #666;
-  animation: bounce 2s infinite;
+  color: #333;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  z-index: 20;
+  animation: instructionBounce 2s infinite;
+}
+
+@keyframes instructionBounce {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+
+  50% {
+    transform: translate(-50%, calc(-50% - 10px));
+  }
 }
 
 @keyframes bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -137,6 +186,7 @@
     transform: translate(-50%, -50%) scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;

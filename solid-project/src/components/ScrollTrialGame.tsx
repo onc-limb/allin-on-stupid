@@ -5,7 +5,7 @@ import "./ScrollTrialGame.css";
 export default function ScrollTrialGame() {
   let canvasRef: HTMLCanvasElement | undefined;
   let threeScene: ThreeScene | undefined;
-  
+
   const [scrollDistanceMeters, setScrollDistanceMeters] = createSignal(0);
   const [startTime, setStartTime] = createSignal<number | null>(null);
   const [elapsedTime, setElapsedTime] = createSignal(0);
@@ -14,7 +14,7 @@ export default function ScrollTrialGame() {
   const [pausedTime, setPausedTime] = createSignal(0);
   const [bestTime, setBestTime] = createSignal<number | null>(null);
 
-  const targetDistance = 200;
+  const targetDistance = 300;
 
   // ディスプレイの物理的なサイズを推定（96 DPI を基準とし、devicePixelRatioを考慮）
   const pixelToMeter = () => {
@@ -26,20 +26,21 @@ export default function ScrollTrialGame() {
 
   let intervalId: number | undefined;
 
-  // wheelイベント（マウス/トラックパッドのスクロール）を処理
-  const handleWheel = (e: WheelEvent) => {
-    // スクロール位置の変化を監視
-    requestAnimationFrame(() => {
-      updateScrollMetrics();
-    });
-  };
+  // 累積スクロールピクセル数（wheelイベントのみで計測）
+  let accumulatedScrollPixels = 0;
 
-  // スクロール位置に基づいてメトリクスを更新
-  const updateScrollMetrics = () => {
-    const distance = window.scrollY;
-    
+  // wheelイベント（マウス/トラックパッドのスクロール）を処理
+  // スクロールバーのドラッグは含まれない
+  const handleWheel = (e: WheelEvent) => {
+    e.preventDefault();
+
+    // 下方向へのスクロールのみ計測（deltaY > 0）
+    if (e.deltaY > 0) {
+      accumulatedScrollPixels += e.deltaY;
+    }
+
     // ピクセルをメートルに変換
-    const meters = distance * pixelToMeter();
+    const meters = accumulatedScrollPixels * pixelToMeter();
     setScrollDistanceMeters(meters);
 
     // Three.jsシーンを更新
@@ -53,7 +54,48 @@ export default function ScrollTrialGame() {
       return;
     }
 
-    if (!isPlaying() && distance > 0) {
+    if (!isPlaying() && accumulatedScrollPixels > 0) {
+      startGame();
+    }
+
+    if (isPlaying() && !isPaused() && meters >= targetDistance) {
+      finishGame();
+    }
+  };
+
+  // タッチスクロール対応
+  let lastTouchY = 0;
+
+  const handleTouchStart = (e: TouchEvent) => {
+    lastTouchY = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    const currentY = e.touches[0].clientY;
+    const deltaY = lastTouchY - currentY; // 上にスワイプ = 下にスクロール = 正の値
+    lastTouchY = currentY;
+
+    // 下方向へのスクロールのみ計測
+    if (deltaY > 0) {
+      accumulatedScrollPixels += deltaY;
+    }
+
+    // ピクセルをメートルに変換
+    const meters = accumulatedScrollPixels * pixelToMeter();
+    setScrollDistanceMeters(meters);
+
+    // Three.jsシーンを更新
+    if (threeScene) {
+      threeScene.updateByScroll(meters);
+    }
+
+    // 一時停止中にスクロールしたら再開
+    if (isPaused()) {
+      resumeGame();
+      return;
+    }
+
+    if (!isPlaying() && accumulatedScrollPixels > 0) {
       startGame();
     }
 
@@ -74,7 +116,7 @@ export default function ScrollTrialGame() {
     setIsPlaying(true);
     setIsPaused(false);
     setStartTime(Date.now() - pausedTime());
-    
+
     intervalId = window.setInterval(() => {
       if (startTime() && !isPaused()) {
         setElapsedTime(Date.now() - startTime()!);
@@ -85,7 +127,7 @@ export default function ScrollTrialGame() {
   const pauseGame = () => {
     setIsPaused(true);
     setPausedTime(elapsedTime());
-    
+
     if (intervalId) {
       clearInterval(intervalId);
     }
@@ -94,7 +136,7 @@ export default function ScrollTrialGame() {
   const resumeGame = () => {
     setIsPaused(false);
     setStartTime(Date.now() - pausedTime());
-    
+
     intervalId = window.setInterval(() => {
       if (startTime() && !isPaused()) {
         setElapsedTime(Date.now() - startTime()!);
@@ -115,14 +157,19 @@ export default function ScrollTrialGame() {
   };
 
   const resetGame = () => {
-    window.scrollTo(0, 0);
+    accumulatedScrollPixels = 0;
     setScrollDistanceMeters(0);
     setStartTime(null);
     setElapsedTime(0);
     setPausedTime(0);
     setIsPlaying(false);
     setIsPaused(false);
-    
+
+    // Three.jsシーンもリセット
+    if (threeScene) {
+      threeScene.updateByScroll(0);
+    }
+
     if (intervalId) {
       clearInterval(intervalId);
     }
@@ -137,11 +184,16 @@ export default function ScrollTrialGame() {
   // イベントリスナーの登録
   onMount(() => {
     // wheelイベント（マウス/トラックパッドのスクロールのみ）を監視
+    // スクロールバーのドラッグはこのイベントでは発火しないので除外される
     window.addEventListener("wheel", handleWheel, { passive: false });
-    
+
+    // タッチスクロール対応
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+
     // キーボードによるスクロールを防止
     window.addEventListener("keydown", preventKeyboardScroll);
-    
+
     // Three.jsの初期化
     if (canvasRef) {
       try {
@@ -156,17 +208,36 @@ export default function ScrollTrialGame() {
     // ウィンドウリサイズ対応
     const handleResize = () => {
       if (threeScene && canvasRef) {
-        const width = canvasRef.clientWidth;
-        const height = canvasRef.clientHeight;
+        // Canvasのサイズを全画面に
+        const width = window.innerWidth;
+        const height = window.innerHeight;
         threeScene.handleResize(width, height);
       }
     };
     window.addEventListener("resize", handleResize);
-    
+
+    // ResizeObserverでCanvas要素のサイズ変更も監視
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (threeScene) {
+          const { width, height } = entry.contentRect;
+          if (width > 0 && height > 0) {
+            threeScene.handleResize(width, height);
+          }
+        }
+      }
+    });
+    if (canvasRef) {
+      resizeObserver.observe(canvasRef);
+    }
+
     onCleanup(() => {
       window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("keydown", preventKeyboardScroll);
       window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       if (intervalId) {
         clearInterval(intervalId);
       }
@@ -179,8 +250,8 @@ export default function ScrollTrialGame() {
 
   return (
     <>
-      {/* スクロール開始後に固定表示される統計パネル */}
-      <div class={`stats-panel ${isPlaying() ? 'fixed' : ''}`}>
+      {/* 統計パネル - 常にヘッダー下に固定表示 */}
+      <div class="stats-panel">
         <div class="stat-item">
           <span class="stat-label">距離</span>
           <span class="stat-value">{scrollDistanceMeters().toFixed(2)}m</span>
@@ -202,14 +273,18 @@ export default function ScrollTrialGame() {
         )}
       </div>
 
-      {/* Three.js 3D Canvas - stats-panelの下に固定表示 */}
-      <canvas 
+      {/* ゲームヘッダー - スクロール開始前のみ表示 */}
+      {!isPlaying() && scrollDistanceMeters() === 0 && (
+        <div class="game-header">
+          <h1>🏃 スクロールタイムアタック</h1>
+          <p>できるだけ早く一番下までスクロールしよう！</p>
+        </div>
+      )}
+
+      {/* Three.js 3D Canvas - stats-panelの下から開始 */}
+      <canvas
         ref={canvasRef}
         class="threejs-canvas"
-        style={{
-          top: isPlaying() ? '160px' : '200px',
-          height: isPlaying() ? 'calc(100vh - 160px)' : 'calc(100vh - 200px)'
-        }}
       />
 
       {!isPlaying() && scrollDistanceMeters() === 0 && (
@@ -240,11 +315,6 @@ export default function ScrollTrialGame() {
           </button>
         </div>
       )}
-
-      <div class="scroll-content">
-        {/* 無限スクロールのための十分な高さを確保 */}
-        <div style={{ height: "1000000px" }}></div>
-      </div>
     </>
   );
 }
