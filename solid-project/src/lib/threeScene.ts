@@ -445,19 +445,21 @@ export class ThreeScene {
     const pinkScale = this.pinkNoiseScale.update();
     const pinkIntensity = this.pinkNoiseIntensity.update();
 
-    // スムーズなスクロール補間
-    this.scrollY += (this.targetScrollY - this.scrollY) * 0.12;
+    // スムーズなスクロール補間（より滑らかに）
+    this.scrollY += (this.targetScrollY - this.scrollY) * 0.08;
     
-    // スクロール量の変化からアニメーション時間を進める
+    // スクロール量の変化からアニメーション時間を進める（上限を設ける）
     const scrollDelta = this.scrollY - this.lastScrollY;
-    this.animationTime += scrollDelta * 120; // スクロールに応じてアニメーション時間を大きく進める
+    const clampedDelta = Math.max(-0.5, Math.min(0.5, scrollDelta)); // 変化量に上限
+    this.animationTime += clampedDelta * 80; // スクロールに応じてアニメーション時間を進める
     this.lastScrollY = this.scrollY;
 
-    // スクロール速度の減衰
-    this.scrollVelocity *= 0.88;
+    // スクロール速度の減衰と上限
+    this.scrollVelocity *= 0.95;
+    this.scrollVelocity = Math.max(-2, Math.min(2, this.scrollVelocity)); // 速度に上限
     
-    // アクティブ度（スクロール速度に応じた動きの強さ）
-    const activity = Math.min(1, Math.abs(this.scrollVelocity) * 8);
+    // アクティブ度（スクロール速度に応じた動きの強さ、稏やかに）
+    const activity = Math.min(0.6, Math.abs(this.scrollVelocity) * 0.3);
     
     // アイドル時の微細な揺らぎ時間（非常にゆっくり進む）
     const idleTime = realTime * 0.05;
@@ -492,21 +494,21 @@ export class ThreeScene {
       z = (((z % ringLoopRange) + ringLoopRange) % ringLoopRange) - ringLoopRange * 0.5;
       ring.position.z = z;
 
-      // 位置変動（アイドル時は微細な揺らぎのみ）
+      // 位置変動（アイドル時は微細な揺らぎのみ、全体的に抑制）
       const baseWaveTime = t * 0.8 + userData.wavePhase;
-      const idleWaveX = Math.sin(idleTime * 0.3 + index * 0.25) * 3; // アイドル時の微細な揺らぎ
-      const idleWaveY = Math.cos(idleTime * 0.2 + index * 0.4) * 2;
-      const activeWaveX = Math.sin(baseWaveTime + index * 0.25) * 12;
-      const activeWaveY = Math.cos(baseWaveTime * 0.6 + index * 0.4) * 10;
+      const idleWaveX = Math.sin(idleTime * 0.3 + index * 0.25) * 2; // アイドル時の微細な揺らぎ
+      const idleWaveY = Math.cos(idleTime * 0.2 + index * 0.4) * 1.5;
+      const activeWaveX = Math.sin(baseWaveTime + index * 0.25) * 6;
+      const activeWaveY = Math.cos(baseWaveTime * 0.6 + index * 0.4) * 5;
       
-      ring.position.x = idleWaveX + activeWaveX * activity + ringPinkX * (10 + activity * 30);
-      ring.position.y = idleWaveY + activeWaveY * activity + ringPinkY * (8 + activity * 27);
+      ring.position.x = idleWaveX + activeWaveX * activity + ringPinkX * (5 + activity * 10);
+      ring.position.y = idleWaveY + activeWaveY * activity + ringPinkY * (4 + activity * 8);
 
-      // 回転（アイドル時は非常にゆっくり）
-      const rotationSpeed = userData.baseRotationSpeed * (0.1 + activity * 0.9);
-      ring.rotation.z += rotationSpeed + ringPinkRot * 0.01 * (0.3 + activity * 0.7);
-      ring.rotation.x = Math.sin(t * 0.6 + userData.phaseOffset) * (0.05 + activity * 0.3) + pinkX * 0.05;
-      ring.rotation.y = Math.cos(t * 0.4 + userData.phaseOffset) * (0.04 + activity * 0.21) + pinkY * 0.04;
+      // 回転（アイドル時は非常にゆっくり、全体的に抑制）
+      const rotationSpeed = userData.baseRotationSpeed * (0.05 + activity * 0.3);
+      ring.rotation.z += rotationSpeed + ringPinkRot * 0.005 * (0.3 + activity * 0.7);
+      ring.rotation.x = Math.sin(t * 0.6 + userData.phaseOffset) * (0.02 + activity * 0.1) + pinkX * 0.02;
+      ring.rotation.y = Math.cos(t * 0.4 + userData.phaseOffset) * (0.02 + activity * 0.08) + pinkY * 0.02;
 
       // スケール（アイドル時は微細な変動のみ）
       const idlePulse = 1 + Math.sin(idleTime * 0.5 + index * 0.3) * 0.02;
@@ -533,53 +535,53 @@ export class ThreeScene {
         const phase = this.linePhases[i];
 
         // アイドル時の微細な揺らぎ
-        const idleWave = Math.sin(idleTime * 0.5 + i * 0.02 + phase * 0.005) * 3;
+        const idleWave = Math.sin(idleTime * 0.5 + i * 0.02 + phase * 0.005) * 2;
         
-        // アクティブ時の波
-        const wave1 = Math.sin(t * 2.2 + i * 0.04 + phase * 0.01) * 12 * activity;
-        const wave2 = Math.sin(t * 1.1 + i * 0.02) * 18 * activity;
-        const wave3 = Math.sin(t * 0.4 + i * 0.01) * 25 * activity;
+        // アクティブ時の波（振幅を抑制）
+        const wave1 = Math.sin(t * 2.2 + i * 0.04 + phase * 0.01) * 5 * activity;
+        const wave2 = Math.sin(t * 1.1 + i * 0.02) * 8 * activity;
+        const wave3 = Math.sin(t * 0.4 + i * 0.01) * 10 * activity;
 
-        const pinkWave = pinkX * (5 + activity * 15) * Math.sin(i * 0.03 + phase * 0.005);
+        const pinkWave = pinkX * (2 + activity * 5) * Math.sin(i * 0.03 + phase * 0.005);
 
-        const angleOffset = Math.sin(t * 0.8 + i * 0.015) * 0.08 * activity;
+        const angleOffset = Math.sin(t * 0.8 + i * 0.015) * 0.03 * activity;
         const angle1 = baseAngle1 + angleOffset;
         const angle2 = baseAngle2 + angleOffset;
 
         const totalWave = idleWave + wave1 + wave2 * 0.6 + wave3 * 0.3 + pinkWave;
 
         linePos[i * 6] = Math.cos(angle1) * (baseRadius1 + totalWave);
-        linePos[i * 6 + 1] = Math.sin(angle1) * (baseRadius1 + totalWave) + wave2 * 0.5 + pinkY * (4 + activity * 11);
+        linePos[i * 6 + 1] = Math.sin(angle1) * (baseRadius1 + totalWave) + wave2 * 0.3 + pinkY * (2 + activity * 4);
         linePos[i * 6 + 2] = baseZ;
 
         linePos[i * 6 + 3] = Math.cos(angle2) * (baseRadius2 + totalWave);
-        linePos[i * 6 + 4] = Math.sin(angle2) * (baseRadius2 + totalWave) + wave2 * 0.5 + pinkY * (4 + activity * 11);
+        linePos[i * 6 + 4] = Math.sin(angle2) * (baseRadius2 + totalWave) + wave2 * 0.3 + pinkY * (2 + activity * 4);
         linePos[i * 6 + 5] = baseZ + 40;
       }
       this.lineGeometry.attributes.position.needsUpdate = true;
 
-      // 線全体の動き（アイドル時は微細な揺らぎのみ）
-      const idleRotZ = Math.sin(idleTime * 0.2) * 0.01;
-      this.lines.rotation.z = idleRotZ + t * 0.06 * activity + pinkRot * (0.1 + activity * 0.2);
-      this.lines.rotation.x = Math.sin(this.scrollY * 0.4) * 0.25 * activity + pinkX * 0.03;
-      this.lines.position.z = Math.sin(this.scrollY * 0.25) * 80 * activity + pinkZ * (15 + activity * 35);
+      // 線全体の動き（アイドル時は微細な揺らぎのみ、全体的に抑制）
+      const idleRotZ = Math.sin(idleTime * 0.2) * 0.005;
+      this.lines.rotation.z = idleRotZ + t * 0.02 * activity + pinkRot * (0.05 + activity * 0.1);
+      this.lines.rotation.x = Math.sin(this.scrollY * 0.4) * 0.1 * activity + pinkX * 0.02;
+      this.lines.position.z = Math.sin(this.scrollY * 0.25) * 30 * activity + pinkZ * (5 + activity * 15);
     }
 
-    // カメラの動き（アイドル時は微細な揺らぎのみ）
-    const idleCamX = Math.sin(idleTime * 0.15) * 5;
-    const idleCamY = Math.cos(idleTime * 0.12) * 4;
-    const activeCamX = Math.sin(t * 0.3) * 20;
-    const activeCamY = Math.cos(t * 0.25) * 15;
+    // カメラの動き（アイドル時は微細な揺らぎのみ、全体的に抑制）
+    const idleCamX = Math.sin(idleTime * 0.15) * 3;
+    const idleCamY = Math.cos(idleTime * 0.12) * 2;
+    const activeCamX = Math.sin(t * 0.3) * 8;
+    const activeCamY = Math.cos(t * 0.25) * 6;
     
     this.camera.position.x = idleCamX + activeCamX * activity + pinkX * (15 + activity * 45);
     this.camera.position.y = idleCamY + activeCamY * activity + pinkY * (12 + activity * 38);
-    this.camera.position.z = 500 + pinkZ * (8 + activity * 22);
+    this.camera.position.z = 500 + pinkZ * (25 + activity * 80);
     this.camera.rotation.z = Math.sin(idleTime * 0.1) * 0.003 + Math.sin(t * 0.15) * 0.015 * activity + pinkRot * (0.008 + activity * 0.022);
 
-    // FOVの微妙な変動（アイドル時は微細な揺らぎのみ）
+    // FOVの微妙な変動（アイドル時は微細な揺らぎのみ、ズームを速く）
     const idleFov = Math.sin(idleTime * 0.1) * 0.3;
-    const activeFov = Math.sin(t * 0.2) * 0.5;
-    this.camera.fov = 60 + idleFov + activeFov * activity + pinkScale * (0.5 + activity * 2.5);
+    const activeFov = Math.sin(t * 0.4) * 1.5;
+    this.camera.fov = 60 + idleFov + activeFov * activity + pinkScale * (2 + activity * 8);
     this.camera.updateProjectionMatrix();
 
     this.renderer.render(this.scene, this.camera);
@@ -593,7 +595,9 @@ export class ThreeScene {
     // スクロール値を更新（メートルから内部スケールに変換）
     const delta = scrollMeters * 0.05;
     this.targetScrollY = delta;
-    this.scrollVelocity = (delta - this.scrollY) * 15;
+    // 速度に上限を設けて暴れないように
+    const rawVelocity = (delta - this.scrollY) * 8;
+    this.scrollVelocity = Math.max(-2, Math.min(2, rawVelocity));
   }
 
   /**

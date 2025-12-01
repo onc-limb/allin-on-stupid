@@ -14,7 +14,7 @@ export default function ScrollTrialGame() {
   const [pausedTime, setPausedTime] = createSignal(0);
   const [bestTime, setBestTime] = createSignal<number | null>(null);
 
-  const targetDistance = 111;
+  const targetDistance = 300;
 
   // ディスプレイの物理的なサイズを推定（96 DPI を基準とし、devicePixelRatioを考慮）
   const pixelToMeter = () => {
@@ -208,9 +208,9 @@ export default function ScrollTrialGame() {
     // ウィンドウリサイズ対応
     const handleResize = () => {
       if (threeScene && canvasRef) {
-        // Canvasのサイズを再計算（CSSのtransitionが完了する前に取得するため、windowサイズを使用）
+        // Canvasのサイズを全画面に
         const width = window.innerWidth;
-        const height = window.innerHeight - (isPlaying() ? 160 : 200);
+        const height = window.innerHeight;
         threeScene.handleResize(width, height);
       }
     };
@@ -250,8 +250,8 @@ export default function ScrollTrialGame() {
 
   return (
     <>
-      {/* スクロール開始後に固定表示される統計パネル */}
-      <div class={`stats-panel ${isPlaying() ? 'fixed' : ''}`}>
+      {/* 統計パネル - 常にヘッダー下に固定表示 */}
+      <div class="stats-panel">
         <div class="stat-item">
           <span class="stat-label">距離</span>
           <span class="stat-value">{scrollDistanceMeters().toFixed(2)}m</span>
@@ -273,14 +273,18 @@ export default function ScrollTrialGame() {
         )}
       </div>
 
-      {/* Three.js 3D Canvas - stats-panelの下に固定表示 */}
+      {/* ゲームヘッダー - スクロール開始前のみ表示 */}
+      {!isPlaying() && scrollDistanceMeters() === 0 && (
+        <div class="game-header">
+          <h1>🏃 スクロールタイムアタック</h1>
+          <p>できるだけ早く一番下までスクロールしよう！</p>
+        </div>
+      )}
+
+      {/* Three.js 3D Canvas - stats-panelの下から開始 */}
       <canvas
         ref={canvasRef}
         class="threejs-canvas"
-        style={{
-          top: isPlaying() ? '160px' : '200px',
-          height: isPlaying() ? 'calc(100vh - 160px)' : 'calc(100vh - 200px)'
-        }}
       />
 
       {!isPlaying() && scrollDistanceMeters() === 0 && (
