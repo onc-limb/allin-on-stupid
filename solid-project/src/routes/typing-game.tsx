@@ -7,6 +7,16 @@ import './typing-game.css';
 // 問題数の選択肢
 const QUESTION_COUNTS = [1, 2, 3];
 
+// マッピング確認時間（秒）
+const MEMORIZE_TIME = 30;
+
+// QWERTY配列のキーボードレイアウト
+const KEYBOARD_ROWS = [
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+    ['z', 'x', 'c', 'v', 'b', 'n', 'm'],
+];
+
 // キーマッピングの型
 type KeyMapping = Record<string, string>;
 
@@ -19,6 +29,8 @@ export default function TypingGame() {
     const [totalQuestions, setTotalQuestions] = createSignal(10);
     const [isGameActive, setIsGameActive] = createSignal(false);
     const [isGameOver, setIsGameOver] = createSignal(false);
+    const [isMemorizePhase, setIsMemorizePhase] = createSignal(false);
+    const [memorizeTimeLeft, setMemorizeTimeLeft] = createSignal(MEMORIZE_TIME);
     const [isLoadingMapping, setIsLoadingMapping] = createSignal(false);
     const [startTime, setStartTime] = createSignal<number | null>(null);
     const [endTime, setEndTime] = createSignal<number | null>(null);
@@ -29,6 +41,7 @@ export default function TypingGame() {
     let inputRef: HTMLInputElement | undefined;
     let canvasRef: HTMLCanvasElement | undefined;
     let threeScene: TypingPolygonScene | null = null;
+    let memorizeTimerId: number | null = null;
 
     // Three.jsシーンを初期化する関数
     const initThreeScene = () => {
@@ -63,6 +76,9 @@ export default function TypingGame() {
     onCleanup(() => {
         if (threeScene) {
             threeScene.dispose();
+        }
+        if (memorizeTimerId) {
+            clearInterval(memorizeTimerId);
         }
     });
 
@@ -102,12 +118,44 @@ export default function TypingGame() {
         setQuestionNumber(1);
         setUserInput('');
         setMappedInput('');
-        setIsGameActive(true);
         setIsGameOver(false);
         setCurrentQuestion(getRandomQuestion());
+        setIsLoadingMapping(false);
+
+        // マッピング確認フェーズを開始
+        setIsMemorizePhase(true);
+        setMemorizeTimeLeft(MEMORIZE_TIME);
+
+        // カウントダウン開始
+        memorizeTimerId = setInterval(() => {
+            setMemorizeTimeLeft((prev) => {
+                if (prev <= 1) {
+                    // 時間切れ、ゲーム開始
+                    clearInterval(memorizeTimerId!);
+                    memorizeTimerId = null;
+                    startTypingPhase();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000) as unknown as number;
+    };
+
+    // マッピング確認をスキップしてゲーム開始
+    const skipMemorize = () => {
+        if (memorizeTimerId) {
+            clearInterval(memorizeTimerId);
+            memorizeTimerId = null;
+        }
+        startTypingPhase();
+    };
+
+    // タイピングフェーズを開始
+    const startTypingPhase = () => {
+        setIsMemorizePhase(false);
+        setIsGameActive(true);
         setStartTime(Date.now());
         setEndTime(null);
-        setIsLoadingMapping(false);
 
         // キャンバスがDOMに追加された後にThree.jsシーンを初期化
         initThreeScene();
@@ -195,11 +243,11 @@ export default function TypingGame() {
                 <h1>謎キーボードタイピングゲーム</h1>
                 <p class="game-description">
                     キーボードの配列が秘密のマッピングで変更されています！<br />
-                    どのキーがどの文字になるか、推理しながらタイピングしよう
+                    どのキーがどの文字になっているか、記憶を頼りにタイピングしてみましょう。
                 </p>
             </div>
 
-            <Show when={!isGameActive() && !isGameOver()}>
+            <Show when={!isGameActive() && !isGameOver() && !isMemorizePhase()}>
                 <div class="start-screen">
                     <div class="question-count-selector">
                         <h2>問題数を選んでスタート</h2>
@@ -219,12 +267,49 @@ export default function TypingGame() {
                     <div class="instructions">
                         <h2>遊び方</h2>
                         <ul>
-                            <li>画面に表示される文字列を入力してください</li>
+                            <li>スタート後、30秒間マッピング表を確認できます</li>
+                            <li>マッピングを覚えたら、問題文を入力してください</li>
                             <li>キーボードのキーが通常とは異なる文字にマッピングされています</li>
-                            <li>マッピングは固定なので、パターンを覚えれば高速入力できます</li>
                             <li>できるだけ早く全問正解を目指しましょう！</li>
                         </ul>
                     </div>
+                </div>
+            </Show>
+
+            <Show when={isMemorizePhase()}>
+                <div class="memorize-phase">
+                    <div class="memorize-header">
+                        <h2>マッピングを覚えよう！</h2>
+                        <div class="memorize-timer">
+                            <span class="timer-label">残り時間</span>
+                            <span class="timer-value">{memorizeTimeLeft()}</span>
+                            <span class="timer-unit">秒</span>
+                        </div>
+                    </div>
+
+                    <div class="keyboard-container">
+                        <p class="keyboard-hint">上段: 押すキー / 下段: 出る文字</p>
+                        <div class="keyboard">
+                            <For each={KEYBOARD_ROWS}>
+                                {(row, rowIndex) => (
+                                    <div class="keyboard-row" style={{ "padding-left": `${rowIndex() * 25}px` }}>
+                                        <For each={row}>
+                                            {(key) => (
+                                                <div class="keyboard-key">
+                                                    <span class="key-original">{key.toUpperCase()}</span>
+                                                    <span class="key-mapped">{(keyMapping()[key] || key).toUpperCase()}</span>
+                                                </div>
+                                            )}
+                                        </For>
+                                    </div>
+                                )}
+                            </For>
+                        </div>
+                    </div>
+
+                    <button class="skip-button" onClick={skipMemorize}>
+                        覚えた！スタート
+                    </button>
                 </div>
             </Show>
 
