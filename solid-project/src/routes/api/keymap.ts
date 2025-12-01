@@ -3,13 +3,13 @@
 
 import type { APIEvent } from "@solidjs/start/server";
 
-// 通常のキーボードの文字キー（小文字）
-const KEYS = 'abcdefghijklmnopqrstuvwxyz0123456789';
+// アルファベット26文字のみをマッピング対象にする（数字は除外）
+const ALPHABET_KEYS = 'abcdefghijklmnopqrstuvwxyz';
 
 // シード値からキーマッピングを生成する（固定のマッピング）
 // シードによって同じマッピングが再現されるようにする
 function generateKeyMappingFromSeed(seed: number): Record<string, string> {
-    const keys = KEYS.split('');
+    const keys = ALPHABET_KEYS.split('');
     const values = [...keys];
 
     // シードを使用した疑似乱数生成器（LCG: Linear Congruential Generator）
@@ -29,6 +29,11 @@ function generateKeyMappingFromSeed(seed: number): Record<string, string> {
     keys.forEach((key, index) => {
         mapping[key] = values[index];
     });
+
+    // 数字はそのまま（マッピングしない）
+    // '0123456789'.split('').forEach(digit => {
+    //     mapping[digit] = digit;
+    // });
 
     return mapping;
 }

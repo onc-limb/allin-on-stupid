@@ -1,6 +1,7 @@
-import { createSignal, Show, For } from 'solid-js';
+import { createSignal, onMount, onCleanup, Show, For } from 'solid-js';
 import { Title } from '@solidjs/meta';
 import { getRandomQuestion, getNextQuestion } from '~/lib/questions';
+import { TypingPolygonScene } from '~/lib/typingPolygonScene';
 import './typing-game.css';
 
 // 問題数の選択肢
@@ -22,8 +23,48 @@ export default function TypingGame() {
     const [startTime, setStartTime] = createSignal<number | null>(null);
     const [endTime, setEndTime] = createSignal<number | null>(null);
     const [keyMapping, setKeyMapping] = createSignal<KeyMapping>({});
+    const [polygonSides, setPolygonSides] = createSignal(4);
+    const [mistypeCount, setMistypeCount] = createSignal(0);
 
     let inputRef: HTMLInputElement | undefined;
+    let canvasRef: HTMLCanvasElement | undefined;
+    let threeScene: TypingPolygonScene | null = null;
+
+    // Three.jsシーンを初期化する関数
+    const initThreeScene = () => {
+        // 既存のシーンがあれば破棄
+        if (threeScene) {
+            threeScene.dispose();
+            threeScene = null;
+        }
+
+        // 少し遅延させてDOMが確実にレンダリングされた後に初期化
+        setTimeout(() => {
+            if (canvasRef) {
+                threeScene = new TypingPolygonScene(canvasRef);
+                threeScene.startAnimation();
+                setPolygonSides(3);
+
+                // リサイズハンドラー
+                const handleResize = () => {
+                    if (canvasRef && threeScene) {
+                        const container = canvasRef.parentElement;
+                        if (container) {
+                            threeScene.handleResize(container.clientWidth, container.clientHeight);
+                        }
+                    }
+                };
+
+                window.addEventListener('resize', handleResize);
+            }
+        }, 50);
+    };
+
+    onCleanup(() => {
+        if (threeScene) {
+            threeScene.dispose();
+        }
+    });
 
     // キーマッピングをサーバーから取得
     const fetchKeyMapping = async () => {
@@ -68,6 +109,9 @@ export default function TypingGame() {
         setEndTime(null);
         setIsLoadingMapping(false);
 
+        // キャンバスがDOMに追加された後にThree.jsシーンを初期化
+        initThreeScene();
+
         // フォーカスを入力フィールドに移動
         setTimeout(() => {
             inputRef?.focus();
@@ -75,6 +119,11 @@ export default function TypingGame() {
     };
 
     const endGame = () => {
+        // ゲーム終了時にポリゴンの面数とミスタイプ数を取得
+        if (threeScene) {
+            setPolygonSides(threeScene.getSides());
+            setMistypeCount(threeScene.getMistypeCount());
+        }
         setIsGameActive(false);
         setIsGameOver(true);
         setEndTime(Date.now());
@@ -112,9 +161,19 @@ export default function TypingGame() {
         const mapped = applyMapping(newInput, mapping);
         setMappedInput(mapped);
 
+        // タイピング時にThree.jsシーンを更新
+        if (threeScene) {
+            threeScene.onKeyTyped();
+        }
+
         // 正解判定
         if (mapped === currentQuestion()) {
             setCorrectCount((prev) => prev + 1);
+
+            // Three.jsシーンで正解エフェクト（問題文の文字数分角を減らす）
+            if (threeScene) {
+                threeScene.onCorrect(currentQuestion().length);
+            }
 
             // 次の問題へ
             if (questionNumber() >= totalQuestions()) {
@@ -182,26 +241,13 @@ export default function TypingGame() {
                         </div>
                     </div>
 
+                    <div class="canvas-container">
+                        <canvas ref={canvasRef} class="polygon-canvas"></canvas>
+                    </div>
+
                     <div class="question-area">
                         <div class="question-label">問題文 (これを入力)</div>
                         <div class="question-text">{currentQuestion()}</div>
-                    </div>
-
-                    <div class="input-area">
-                        <div class="input-label">あなたの入力 (押したキー)</div>
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            class="input-field"
-                            value={userInput()}
-                            onKeyDown={handleKeyDown}
-                            autocomplete="off"
-                            autocorrect="off"
-                            autocapitalize="off"
-                            spellcheck={false}
-                            autofocus
-                            readonly
-                        />
                     </div>
 
                     <div class="mapped-area">
@@ -211,6 +257,21 @@ export default function TypingGame() {
                             マッピングされた結果がここに表示されます
                         </div>
                     </div>
+
+                    {/* 非表示の入力フィールド（キーイベント受け取り用） */}
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        class="hidden-input"
+                        value={userInput()}
+                        onKeyDown={handleKeyDown}
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck={false}
+                        autofocus
+                        readonly
+                    />
                 </div>
             </Show>
 
@@ -225,6 +286,10 @@ export default function TypingGame() {
                         <div class="final-time">
                             <div class="final-time-label">クリアタイム</div>
                             <div class="final-time-value">{getElapsedTime()}秒</div>
+                        </div>
+                        <div class="final-mistype">
+                            <div class="final-mistype-label">ミスタイプ数</div>
+                            <div class="final-mistype-value">{mistypeCount()}</div>
                         </div>
                     </div>
                     <div class="question-count-selector">
