@@ -11,15 +11,15 @@ export type QuestionData = {
 export const questionsData: QuestionData[] = [
   { 
     id: "q1",
-    src: "/images/password/fd401322.jpg", 
-    answer: "フルーツ",
-    choices: ["フルーツ", "野菜", "お菓子", "飲み物"]
+    src: "/images/password/001.png", 
+    answer: "砂時計",
+    choices: ["花瓶", "砂時計", "地球儀", "ランプ"]
   },
   { 
     id: "q2",
-    src: "/images/password/fd401322.jpg", 
-    answer: "食べ物",
-    choices: ["食べ物", "動物", "建物", "乗り物"]
+    src: "/images/password/002.png", 
+    answer: "地球儀",
+    choices: ["地球儀", "スノードーム", "バスケットボール", "置き時計"]
   },
   { 
     id: "q3",
