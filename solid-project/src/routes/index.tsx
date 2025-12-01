@@ -10,15 +10,15 @@ export default function Home() {
       path: "/scroll-trial",
       icon: "🏃",
       status: "公開中",
-      comment: "くだらないけど怒らないでね！"
+      comment: "考え事をしている時に無意識にスクロールしてしまうあなたへ"
     },
     {
       title: "パスワードタイピング練習",
       description: "ランダムなパスワード文字列でタイピング練習。",
       path: "/password-typing",
       icon: "🔐",
-      status: "開発中",
-      comment: "comming soon..."
+      status: "公開中",
+      comment: "コピペではなく、ちゃんとタイピングしてみたら？"
     },
     {
       title: "バイナリ計算練習",
