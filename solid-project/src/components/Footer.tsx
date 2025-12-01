@@ -7,7 +7,7 @@ export default function Footer() {
     <footer class="app-footer">
       <div class="footer-container">
         <p class="footer-text">
-          &copy; {currentYear} All In On Stupid - くだらないゲームで技術を学ぶ
+          &copy; {currentYear} onclimb(おんりむ)
         </p>
       </div>
     </footer>
