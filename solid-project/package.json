@@ -18,5 +18,10 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "pnpm": {
+    "overrides": {
+      "seroval": ">=1.4.1"
+    }
   }
 }
