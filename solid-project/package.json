@@ -18,5 +18,10 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "pnpm": {
+    "overrides": {
+      "node-forge": ">=1.3.2"
+    }
   }
 }
